@@ -398,6 +398,54 @@ body{
   cursor:pointer;
   flex-shrink:0;
 }
+
+/* ESTILOS PARA RESPONDER MENSAJES */
+
+.message-menu {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  overflow: hidden;
+  min-width: 150px;
+}
+
+.message-menu button {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.message-menu button:first-child {
+  border-bottom: 1px solid #eee;
+}
+
+.message-menu button:hover {
+  background: #f5f5f5;
+}
+
+.reply-ref {
+  border-left: 4px solid #25d366;
+  background: #f9f9f9;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.reply-ref b {
+  color: #075E54;
+  display: block;
+  margin-bottom: 3px;
+}
 </style>
 </head>
 
@@ -427,11 +475,24 @@ body{
   <div class="messages" id="messages"></div>
 </div>
 
+<!-- VISTA PREVIA DE RESPUESTA -->
+<div id="replyPreview" style="display:none; padding:10px 15px; border-left:4px solid #25d366; background:#f0f0f0; position:relative; border-bottom:1px solid #ddd;">
+  <div style="font-weight:bold;color:#075E54;font-size:12px;">Respondiendo a:</div>
+  <span id="replyText" style="color:#333; font-size:13px; display:block; margin-top:5px;"></span>
+  <button onclick="window.cancelReply()" style="position:absolute; right:10px; top:8px; background:none; border:none; font-size:18px; cursor:pointer; color:#999;">✕</button>
+</div>
+
 <div class="footer" id="chatFooter" style="display:none;">
   <input type="file" id="imageInput" accept="image/*" hidden>
   <button onclick="document.getElementById('imageInput').click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
   <button onclick="sendMessage()">➤</button>
+</div>
+
+<!-- MENU DE OPCIONES DEL MENSAJE (Responde o Borra) -->
+<div class="message-menu" id="messageMenu">
+  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left;">↩️ Responder</button>
+  <button id="deleteMsgBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;color:#c00;font-size:15px;cursor:pointer;text-align:left;">🗑️ Eliminar</button>
 </div>
 
 <!-- MODAL PARA VER FOTO COMPLETA -->
@@ -478,6 +539,8 @@ let currentUser = null;
 let lastMessageCount = 0;
 let selectedMessageId = null;
 let pendingDeleteType = null;
+let replyToMessage = null;
+let menuOpenTime = 0;
 
 /* MENU DROPDOWN */
 window.toggleMenu = function(){
@@ -577,19 +640,31 @@ async function deleteMessage(docId){
   }
 }
 
-/* ENVIAR TEXTO */
+/* ENVIAR TEXTO CON OPCIÓN DE RESPUESTA */
 window.sendMessage = async function(){
   const text = document.getElementById("messageInput").value.trim();
   if(text === "") return;
 
-  await addDoc(collection(db,"messages"),{
+  const messageData = {
     text: text,
     username: currentUser,
     createdAt: new Date(),
     type: "text"
-  });
+  };
+
+  // Si va a responder a un mensaje, incluye la referencia
+  if (replyToMessage) {
+    messageData.replyTo = {
+      id: replyToMessage.id,
+      text: replyToMessage.text || "(Imagen)",
+      username: replyToMessage.username
+    };
+  }
+
+  await addDoc(collection(db,"messages"), messageData);
 
   document.getElementById("messageInput").value = "";
+  window.cancelReply();
 }
 
 /* ENVIAR IMAGEN */
@@ -634,6 +709,60 @@ window.closePhotoModal = function(){
   document.getElementById("photoModal").classList.remove("active");
 }
 
+/* MOSTRAR MENÚ DE OPCIONES DEL MENSAJE */
+function showMessageMenu(x, y, docId, messageData) {
+  const menu = document.getElementById("messageMenu");
+  const viewport = window.innerHeight;
+  let top = y;
+  if (y + 100 > viewport) top = y - 100;
+  menu.style.left = x + "px";
+  menu.style.top = top + "px";
+  menu.style.display = "block";
+  menuOpenTime = Date.now();
+  selectedMessageId = docId;
+
+  // Botón "Responder"
+  document.getElementById("replyBtn").onclick = function() {
+    menu.style.display = "none";
+    showReplyPreview(messageData);
+    replyToMessage = messageData;
+  };
+  // Botón "Eliminar"
+  document.getElementById("deleteMsgBtn").onclick = function() {
+    menu.style.display = "none";
+    document.getElementById("confirmTitle").textContent = "Borrar Mensaje";
+    document.getElementById("confirmText").textContent = "¿Deseas eliminar este mensaje?";
+    document.getElementById("confirmBtn").textContent = "Borrar";
+    pendingDeleteType = "message";
+    document.getElementById("confirmationModal").classList.add("active");
+  };
+}
+
+/* MOSTRAR VISTA PREVIA DE RESPUESTA */
+function showReplyPreview(messageData){
+  const preview = document.getElementById("replyPreview");
+  const replyText = document.getElementById("replyText");
+  if(messageData.text) replyText.textContent = messageData.text.slice(0,100);
+  else if(messageData.imageUrl) replyText.textContent = "📸 Imagen";
+  else replyText.textContent = "";
+  preview.style.display = "block";
+  document.getElementById("messageInput").focus();
+}
+
+/* CANCELAR RESPUESTA */
+window.cancelReply = function() {
+  document.getElementById("replyPreview").style.display = "none";
+  replyToMessage = null;
+};
+
+/* OCULTAR MENÚ AL HACER CLICK FUERA */
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("messageMenu");
+  if (menu && !menu.contains(e.target) && Date.now() - menuOpenTime > 100) {
+    menu.style.display = "none";
+  }
+});
+
 /* SCROLL AL FINAL */
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
@@ -643,38 +772,42 @@ function scrollToBottom() {
 }
 
 /* LONG PRESS EN MENSAJES */
-function addMessageListeners(element, docId){
+function addMessageListeners(element, docId, messageData){
   let pressTimer;
-  
-  element.addEventListener("touchstart", () => {
+  let pressStarted = false;
+
+  // Long press móvil
+  element.addEventListener("touchstart", (e) => {
+    pressStarted = true;
     pressTimer = setTimeout(() => {
-      element.classList.add("long-press");
-      selectedMessageId = docId;
-      document.getElementById("confirmTitle").textContent = "Borrar Mensaje";
-      document.getElementById("confirmText").textContent = "¿Deseas eliminar este mensaje?";
-      document.getElementById("confirmBtn").textContent = "Borrar";
-      pendingDeleteType = "message";
-      document.getElementById("confirmationModal").classList.add("active");
-    }, 500); // 500ms para long press
+      if(pressStarted) {
+        element.classList.add("long-press");
+        const touch = e.touches[0];
+        showMessageMenu(touch.clientX, touch.clientY - 50, docId, messageData);
+      }
+    }, 500);
   });
 
   element.addEventListener("touchend", () => {
+    pressStarted = false;
     clearTimeout(pressTimer);
+    element.classList.remove("long-press");
   });
 
   element.addEventListener("touchmove", () => {
+    pressStarted = false;
     clearTimeout(pressTimer);
   });
 
-  // Para desktop (click derecho)
+  // Click derecho desktop
   element.addEventListener("contextmenu", (e) => {
     e.preventDefault();
-    selectedMessageId = docId;
-    document.getElementById("confirmTitle").textContent = "Borrar Mensaje";
-    document.getElementById("confirmText").textContent = "¿Deseas eliminar este mensaje?";
-    document.getElementById("confirmBtn").textContent = "Borrar";
-    pendingDeleteType = "message";
-    document.getElementById("confirmationModal").classList.add("active");
+    element.classList.add("long-press");
+    showMessageMenu(e.clientX, e.clientY, docId, messageData);
+  });
+
+  element.addEventListener("click", () => {
+    element.classList.remove("long-press");
   });
 }
 
@@ -702,6 +835,14 @@ function loadMessages(){
 
       let content = `<div class="username">${data.username}</div>`;
 
+      // Mostrar referencia si responde a un mensaje
+      if(data.replyTo) {
+        content += `<div class="reply-ref">
+          <b>↩️ Respondiendo a ${data.replyTo.username}:</b>
+          <span>${escapeHtml(data.replyTo.text || "").substring(0, 80)}</span>
+        </div>`;
+      }
+
       if(data.text){
         content += `<div class="message-text">${escapeHtml(data.text)}</div>`;
       }
@@ -727,7 +868,12 @@ function loadMessages(){
       messagesDiv.appendChild(div);
       
       // Agregar listeners para long press
-      addMessageListeners(div, docId);
+      addMessageListeners(div, docId, {
+        id: docId,
+        text: data.text,
+        imageUrl: data.imageUrl,
+        username: data.username
+      });
     });
 
     if(isFirstLoad || isNewMessage){
