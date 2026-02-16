@@ -24,10 +24,10 @@ body{
   background:white;
   display:flex;
   flex-direction:column;
+  position:relative;
 }
 
 /* HEADER */
-
 .header{
   background:#075E54;
   color:white;
@@ -53,7 +53,6 @@ body{
 }
 
 /* LOGIN */
-
 .login{
   margin:auto;
   width:85%;
@@ -81,7 +80,6 @@ body{
 }
 
 /* CHAT */
-
 .chat{
   display:none;
   flex-direction:column;
@@ -100,7 +98,6 @@ body{
 }
 
 /* MENSAJES */
-
 .message{
   max-width:75%;
   padding:10px;
@@ -133,25 +130,9 @@ body{
   max-width:100%;
   border-radius:8px;
   margin-top:5px;
-  cursor:pointer;
-}
-
-/* Imagen bloqueada */
-.one-time-overlay{
-  position:absolute;
-  inset:0;
-  background:black;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:12px;
-  font-size:13px;
-  cursor:pointer;
 }
 
 /* FOOTER */
-
 .footer{
   position:fixed;
   bottom:0;
@@ -182,6 +163,53 @@ body{
   background:#25D366;
   color:white;
 }
+
+/* BOTON IR ABAJO */
+.scrollDown{
+  position:absolute;
+  right:15px;
+  bottom:80px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#25D366;
+  color:white;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  cursor:pointer;
+}
+
+/* PREVIEW */
+.previewOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.9);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:20;
+}
+
+.previewOverlay img{
+  max-width:90%;
+  border-radius:12px;
+}
+
+.previewButtons{
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+}
+
+.previewButtons button{
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -205,9 +233,11 @@ body{
   <div class="messages" id="messages"></div>
 </div>
 
+<div class="scrollDown" id="scrollBtn" onclick="scrollToBottom()">↓</div>
+
 <div class="footer" id="chatFooter" style="display:none;">
   <input type="file" id="imageInput" accept="image/*" hidden>
-  <button onclick="document.getElementById('imageInput').click()">📷</button>
+  <button onclick="imageInput.click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
   <button onclick="sendMessage()">➤</button>
 </div>
@@ -233,6 +263,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentUser=null;
+let selectedFile=null;
 
 /* LOGIN */
 window.login = async function(){
@@ -257,7 +288,6 @@ window.login = async function(){
   }
 }
 
-/* LOGOUT */
 window.logout=function(){
   location.reload();
 }
@@ -276,34 +306,68 @@ window.sendMessage=async function(){
   messageInput.value="";
 }
 
-/* 📷 ENVIAR IMAGEN AUTOMÁTICAMENTE */
-imageInput.addEventListener("change",async(e)=>{
-  const file=e.target.files[0];
-  if(!file) return;
+/* SCROLL CONTROL */
+function scrollToBottom(){
+  messages.scrollTop=messages.scrollHeight;
+  scrollBtn.style.display="none";
+}
 
-  const storageRef=ref(storage,"chatImages/"+Date.now()+"_"+file.name);
-  await uploadBytes(storageRef,file);
+messages.addEventListener("scroll",()=>{
+  const isAtBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 10;
+  scrollBtn.style.display = isAtBottom ? "none" : "flex";
+});
+
+/* PREVIEW IMAGE */
+imageInput.addEventListener("change",(e)=>{
+  selectedFile=e.target.files[0];
+  if(!selectedFile) return;
+
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const overlay=document.createElement("div");
+    overlay.className="previewOverlay";
+    overlay.innerHTML=`
+      <img src="${ev.target.result}">
+      <div class="previewButtons">
+        <button onclick="sendImage(false)">Enviar</button>
+        <button onclick="sendImage(true)">Ver una vez</button>
+        <button onclick="closePreview()">Cancelar</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  };
+  reader.readAsDataURL(selectedFile);
+});
+
+/* ENVIAR IMAGEN */
+window.sendImage=async function(oneTime){
+  const storageRef=ref(storage,"chatImages/"+Date.now()+"_"+selectedFile.name);
+  await uploadBytes(storageRef,selectedFile);
   const url=await getDownloadURL(storageRef);
 
   await addDoc(collection(db,"messages"),{
     imageUrl:url,
     username:currentUser,
-    oneTime:true,
+    oneTime:oneTime,
     createdAt:serverTimestamp()
   });
 
-  imageInput.value=""; // limpia input
-});
+  closePreview();
+  imageInput.value="";
+}
+
+/* CERRAR PREVIEW */
+window.closePreview=function(){
+  const overlay=document.querySelector(".previewOverlay");
+  if(overlay) overlay.remove();
+}
 
 /* CARGAR MENSAJES */
 function loadMessages(){
   const q=query(collection(db,"messages"),orderBy("createdAt"));
 
   onSnapshot(q,(snapshot)=>{
-    const wasAtBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 50;
-
     messages.innerHTML="";
-
     snapshot.forEach(doc=>{
       const data=doc.data();
       const div=document.createElement("div");
@@ -311,44 +375,15 @@ function loadMessages(){
       div.classList.add(data.username===currentUser?"sent":"received");
 
       let content=`<div class="username">${data.username}</div>`;
-
-      if(data.text){
-        content+=`<div>${data.text}</div>`;
-      }
-
-      if(data.imageUrl){
-        content+=`
-          <div style="position:relative;">
-            <img src="${data.imageUrl}" id="img-${doc.id}">
-            ${data.oneTime ? `<div class="one-time-overlay" onclick="revealImage('${doc.id}')">Ver una vez</div>` : ""}
-          </div>
-        `;
-      }
+      if(data.text) content+=`<div>${data.text}</div>`;
+      if(data.imageUrl) content+=`<img src="${data.imageUrl}">`;
 
       div.innerHTML=content;
       messages.appendChild(div);
     });
 
-    if(wasAtBottom){
-      messages.scrollTop=messages.scrollHeight;
-    }
+    scrollToBottom();
   });
-}
-
-/* 👁 VER UNA SOLA VEZ (solo front) */
-window.revealImage=function(id){
-  const overlay=document.querySelector(`#img-${id}`).nextElementSibling;
-  if(!overlay) return;
-
-  overlay.remove();
-
-  setTimeout(()=>{
-    const img=document.getElementById(`img-${id}`);
-    if(img){
-      img.style.filter="blur(20px)";
-      img.style.opacity="0.3";
-    }
-  },5000); // visible 5 segundos
 }
 </script>
 
