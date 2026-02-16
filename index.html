@@ -61,17 +61,13 @@ body{
   text-align:center;
 }
 
-.login h2{
-  color:#075E54;
-}
-
 .login input{
   width:100%;
   padding:12px;
   margin:10px 0;
   border-radius:8px;
   border:1px solid #ccc;
-  font-size:16px; /* evita zoom */
+  font-size:16px;
 }
 
 .login button{
@@ -112,6 +108,7 @@ body{
   border-radius:12px;
   font-size:14px;
   word-wrap:break-word;
+  position:relative;
 }
 
 .sent{
@@ -136,6 +133,21 @@ body{
   max-width:100%;
   border-radius:8px;
   margin-top:5px;
+  cursor:pointer;
+}
+
+/* Imagen bloqueada */
+.one-time-overlay{
+  position:absolute;
+  inset:0;
+  background:black;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  font-size:13px;
+  cursor:pointer;
 }
 
 /* FOOTER */
@@ -157,7 +169,7 @@ body{
   padding:10px;
   border-radius:20px;
   border:1px solid #ccc;
-  font-size:16px; /* evita zoom */
+  font-size:16px;
 }
 
 .footer button{
@@ -194,7 +206,6 @@ body{
 </div>
 
 <div class="footer" id="chatFooter" style="display:none;">
-  <!-- Quitamos capture -->
   <input type="file" id="imageInput" accept="image/*" hidden>
   <button onclick="document.getElementById('imageInput').click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
@@ -205,7 +216,7 @@ body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -259,13 +270,13 @@ window.sendMessage=async function(){
   await addDoc(collection(db,"messages"),{
     text:text,
     username:currentUser,
-    createdAt:new Date()
+    createdAt:serverTimestamp()
   });
 
   messageInput.value="";
 }
 
-/* ENVIAR IMAGEN */
+/* 📷 ENVIAR IMAGEN AUTOMÁTICAMENTE */
 imageInput.addEventListener("change",async(e)=>{
   const file=e.target.files[0];
   if(!file) return;
@@ -277,8 +288,11 @@ imageInput.addEventListener("change",async(e)=>{
   await addDoc(collection(db,"messages"),{
     imageUrl:url,
     username:currentUser,
-    createdAt:new Date()
+    oneTime:true,
+    createdAt:serverTimestamp()
   });
+
+  imageInput.value=""; // limpia input
 });
 
 /* CARGAR MENSAJES */
@@ -286,6 +300,8 @@ function loadMessages(){
   const q=query(collection(db,"messages"),orderBy("createdAt"));
 
   onSnapshot(q,(snapshot)=>{
+    const wasAtBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 50;
+
     messages.innerHTML="";
 
     snapshot.forEach(doc=>{
@@ -301,15 +317,38 @@ function loadMessages(){
       }
 
       if(data.imageUrl){
-        content+=`<img src="${data.imageUrl}">`;
+        content+=`
+          <div style="position:relative;">
+            <img src="${data.imageUrl}" id="img-${doc.id}">
+            ${data.oneTime ? `<div class="one-time-overlay" onclick="revealImage('${doc.id}')">Ver una vez</div>` : ""}
+          </div>
+        `;
       }
 
       div.innerHTML=content;
       messages.appendChild(div);
     });
 
-    messages.scrollTop=messages.scrollHeight;
+    if(wasAtBottom){
+      messages.scrollTop=messages.scrollHeight;
+    }
   });
+}
+
+/* 👁 VER UNA SOLA VEZ (solo front) */
+window.revealImage=function(id){
+  const overlay=document.querySelector(`#img-${id}`).nextElementSibling;
+  if(!overlay) return;
+
+  overlay.remove();
+
+  setTimeout(()=>{
+    const img=document.getElementById(`img-${id}`);
+    if(img){
+      img.style.filter="blur(20px)";
+      img.style.opacity="0.3";
+    }
+  },5000); // visible 5 segundos
 }
 </script>
 
