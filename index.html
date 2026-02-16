@@ -50,6 +50,7 @@ body{
   padding:6px 10px;
   border-radius:6px;
   font-size:12px;
+  cursor:pointer;
 }
 
 /* LOGIN */
@@ -71,7 +72,7 @@ body{
   margin:10px 0;
   border-radius:8px;
   border:1px solid #ccc;
-  font-size:16px; /* evita zoom */
+  font-size:16px;
 }
 
 .login button{
@@ -82,6 +83,7 @@ body{
   background:#25D366;
   color:white;
   font-size:16px;
+  cursor:pointer;
 }
 
 /* CHAT */
@@ -112,6 +114,9 @@ body{
   border-radius:12px;
   font-size:14px;
   word-wrap:break-word;
+  word-break:break-word;
+  white-space:normal;
+  overflow-wrap:break-word;
 }
 
 .sent{
@@ -132,22 +137,31 @@ body{
   margin-bottom:3px;
 }
 
+.message-text{
+  word-wrap:break-word;
+  word-break:break-word;
+  white-space:pre-wrap;
+  overflow-wrap:break-word;
+}
+
 .message img{
   max-width:100%;
   border-radius:8px;
   margin-top:5px;
   cursor:pointer;
+  display:block;
 }
 
 .photo-blur {
-  filter: blur(8px);
-  cursor: pointer;
+  filter:blur(8px);
+  cursor:pointer;
 }
 
 .photo-status{
-  font-size:11px;
-  opacity:0.7;
+  font-size:12px;
+  opacity:0.8;
   margin-top:5px;
+  font-weight:500;
 }
 
 /* MODAL PARA VER FOTO COMPLETA */
@@ -207,6 +221,7 @@ body{
   border-top:1px solid #ddd;
   background:white;
   align-items:center;
+  gap:5px;
 }
 
 .footer input[type="text"]{
@@ -214,11 +229,10 @@ body{
   padding:10px;
   border-radius:20px;
   border:1px solid #ccc;
-  font-size:16px; /* evita zoom */
+  font-size:16px;
 }
 
 .footer button{
-  margin-left:5px;
   border:none;
   border-radius:50%;
   width:40px;
@@ -226,6 +240,8 @@ body{
   font-size:18px;
   background:#25D366;
   color:white;
+  cursor:pointer;
+  flex-shrink:0;
 }
 </style>
 </head>
@@ -257,7 +273,7 @@ body{
   <button onclick="sendMessage()">➤</button>
 </div>
 
-<!-- MODAL PARA VER FOTOS -->
+<!-- MODAL PARA VER FOTO COMPLETA -->
 <div class="modal" id="photoModal">
   <div class="modal-content" id="modalContent">
     <button class="modal-close" onclick="closePhotoModal()">✕</button>
@@ -286,12 +302,11 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentUser = null;
-let isLoadingMessages = false;
 
 /* LOGIN */
 window.login = async function(){
-  const user = username.value.trim();
-  const pass = password.value.trim();
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
   if(!user || !pass) return alert("Completa los campos");
 
   const q = query(collection(db,"users"),
@@ -304,9 +319,9 @@ window.login = async function(){
     alert("Datos incorrectos");
   }else{
     currentUser = user;
-    loginSection.style.display = "none";
-    chatSection.style.display = "flex";
-    chatFooter.style.display = "flex";
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("chatSection").style.display = "flex";
+    document.getElementById("chatFooter").style.display = "flex";
     loadMessages();
   }
 }
@@ -318,20 +333,21 @@ window.logout = function(){
 
 /* ENVIAR TEXTO */
 window.sendMessage = async function(){
-  const text = messageInput.value.trim();
+  const text = document.getElementById("messageInput").value.trim();
   if(text === "") return;
 
   await addDoc(collection(db,"messages"),{
     text: text,
     username: currentUser,
-    createdAt: new Date()
+    createdAt: new Date(),
+    type: "text"
   });
 
-  messageInput.value = "";
+  document.getElementById("messageInput").value = "";
 }
 
 /* ENVIAR IMAGEN */
-imageInput.addEventListener("change", async(e)=>{
+document.getElementById("imageInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
 
@@ -343,19 +359,25 @@ imageInput.addEventListener("change", async(e)=>{
     imageUrl: url,
     username: currentUser,
     createdAt: new Date(),
-    viewedBy: [] // Array para registrar quién vio la foto
+    viewedBy: [],
+    type: "image"
   });
 
-  imageInput.value = "";
+  document.getElementById("imageInput").value = "";
 });
 
 /* ABRIR MODAL CON FOTO */
-window.openPhotoModal = async function(docId, imageUrl, isViewed){
-  if(!isViewed && currentUser === "pipe"){
-    // Marcar como visto
-    await updateDoc(doc(db, "messages", docId), {
-      viewedBy: [...(viewedBy || []), currentUser]
-    });
+window.openPhotoModal = async function(docId, imageUrl, username){
+  // Solo marcar como vista si el receptor (no el remitente) abre la foto
+  if(username !== currentUser){
+    try {
+      const messageDoc = doc(db, "messages", docId);
+      await updateDoc(messageDoc, {
+        viewedBy: [currentUser]
+      });
+    } catch(error) {
+      console.log("Error al actualizar:", error);
+    }
   }
   
   document.getElementById("modalImage").src = imageUrl;
@@ -372,15 +394,14 @@ function loadMessages(){
   const q = query(collection(db,"messages"), orderBy("createdAt"));
 
   onSnapshot(q, (snapshot)=>{
-    if(isLoadingMessages) return;
-    isLoadingMessages = true;
-
-    messages.innerHTML = "";
-    let shouldScroll = true;
+    const messagesDiv = document.getElementById("messages");
+    
+    messagesDiv.innerHTML = "";
 
     snapshot.forEach(doc=>{
       const data = doc.data();
       const docId = doc.id;
+      
       const div = document.createElement("div");
       div.classList.add("message");
       div.classList.add(data.username === currentUser ? "sent" : "received");
@@ -388,45 +409,47 @@ function loadMessages(){
       let content = `<div class="username">${data.username}</div>`;
 
       if(data.text){
-        content += `<div>${data.text}</div>`;
+        content += `<div class="message-text">${escapeHtml(data.text)}</div>`;
       }
 
       if(data.imageUrl){
         const viewedBy = data.viewedBy || [];
-        const isViewed = viewedBy.includes("pipe");
+        const wasViewed = viewedBy.length > 0;
         const isSender = data.username === currentUser;
+        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
 
-        // Si es una foto enviada por Angie y la vio Pipe
-        if(isSender && isViewed){
-          // Angie ve que Pipe ya vio la foto
-          content += `<div class="photo-status">Disponible 1 sola vez para pipe</div>`;
-        }
-        // Si es una foto de Angie y Pipe no la ha visto
-        else if(!isSender && !isViewed){
-          // Pipe ve la foto pixeleada
-          content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openPhotoModal('${docId}', '${data.imageUrl}', false)" alt="Foto">`;
-        }
-        // Si es una foto de Angie y Pipe ya la vió
-        else if(!isSender && isViewed){
-          // Pipe ya vio la foto
-          content += `<div class="photo-status">Foto vista</div>`;
-        }
-        // Si es una foto que Pipe envió (siempre visible)
-        else if(isSender){
-          content += `<img src="${data.imageUrl}" onclick="openPhotoModal('${docId}', '${data.imageUrl}', true)" alt="Foto">`;
+        if(isSender){
+          // YO ENVIÉ LA FOTO
+          // Angie siempre ve texto
+          content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
+        } else {
+          // LA OTRA PERSONA ENVIÓ LA FOTO
+          if(wasViewed){
+            // YO YA LA VI
+            content += `<div class="photo-status">📸 Foto vista</div>`;
+          } else {
+            // YO AÚN NO LA VEO - Pixeleada
+            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openPhotoModal('${docId}', '${data.imageUrl}', '${data.username}')" alt="Foto">`;
+          }
         }
       }
 
       div.innerHTML = content;
-      messages.appendChild(div);
+      messagesDiv.appendChild(div);
     });
 
     // Scroll al final
     setTimeout(() => {
-      messages.scrollTop = messages.scrollHeight;
-      isLoadingMessages = false;
-    }, 0);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }, 10);
   });
+}
+
+/* ESCAPE HTML PARA SEGURIDAD */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 </script>
 
