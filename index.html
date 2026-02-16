@@ -8,11 +8,17 @@
 <style>
 *{box-sizing:border-box;}
 
-body{
+html, body{
   margin:0;
+  padding:0;
   font-family:'Segoe UI', sans-serif;
   background:#ece5dd;
-  height:100vh;
+  height:100%;
+  width:100%;
+  overflow:hidden;
+}
+
+body{
   display:flex;
   justify-content:center;
 }
@@ -20,10 +26,11 @@ body{
 .container{
   width:100%;
   max-width:420px;
-  height:100vh;
+  height:100%;
   background:white;
   display:flex;
   flex-direction:column;
+  position:relative;
 }
 
 /* HEADER */
@@ -36,12 +43,9 @@ body{
   justify-content:space-between;
   align-items:center;
   font-weight:bold;
-  position:fixed;
-  top:0;
-  width:100%;
-  max-width:420px;
-  z-index:10;
+  flex-shrink:0;
   height:55px;
+  z-index:10;
 }
 
 .logout{
@@ -92,25 +96,26 @@ body{
 .chat{
   display:none;
   flex-direction:column;
-  height:100%;
-  padding-top:55px;
-  padding-bottom:70px;
-  box-sizing:border-box;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
 }
 
 .messages{
   flex:1;
   overflow-y:auto;
+  overflow-x:hidden;
   padding:15px;
   display:flex;
   flex-direction:column;
   background:#ece5dd;
+  min-height:0;
 }
 
 /* MENSAJES */
 
 .message{
-  max-width:75%;
+  max-width:85%;
   padding:10px;
   margin:5px 0;
   border-radius:12px;
@@ -119,6 +124,7 @@ body{
   word-break:break-word;
   white-space:normal;
   overflow-wrap:break-word;
+  flex-shrink:0;
 }
 
 .sent{
@@ -214,18 +220,13 @@ body{
 /* FOOTER */
 
 .footer{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  max-width:420px;
   display:flex;
   padding:8px;
   border-top:1px solid #ddd;
   background:white;
   align-items:center;
   gap:5px;
-  height:70px;
-  box-sizing:border-box;
+  flex-shrink:0;
   z-index:15;
 }
 
@@ -307,6 +308,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentUser = null;
+let lastMessageCount = 0;
 
 /* LOGIN */
 window.login = async function(){
@@ -394,12 +396,25 @@ window.closePhotoModal = function(){
   document.getElementById("photoModal").classList.remove("active");
 }
 
+/* SCROLL AL FINAL */
+function scrollToBottom() {
+  const messagesDiv = document.getElementById("messages");
+  setTimeout(() => {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }, 50);
+}
+
 /* CARGAR MENSAJES */
 function loadMessages(){
   const q = query(collection(db,"messages"), orderBy("createdAt"));
 
   onSnapshot(q, (snapshot)=>{
     const messagesDiv = document.getElementById("messages");
+    const messageCount = snapshot.size;
+    const isFirstLoad = lastMessageCount === 0;
+    const isNewMessage = messageCount > lastMessageCount;
+    
+    lastMessageCount = messageCount;
     
     messagesDiv.innerHTML = "";
 
@@ -425,7 +440,6 @@ function loadMessages(){
 
         if(isSender){
           // YO ENVIÉ LA FOTO
-          // Angie siempre ve texto
           content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
         } else {
           // LA OTRA PERSONA ENVIÓ LA FOTO
@@ -443,10 +457,10 @@ function loadMessages(){
       messagesDiv.appendChild(div);
     });
 
-    // Scroll al final
-    setTimeout(() => {
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }, 10);
+    // Scroll al final para mensajes nuevos o al cargar
+    if(isFirstLoad || isNewMessage){
+      scrollToBottom();
+    }
   });
 }
 
@@ -456,6 +470,17 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+/* AJUSTAR LAYOUT AL CAMBIAR TAMAÑO DE VIEWPORT (teclado virtual) */
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', () => {
+    scrollToBottom();
+  });
+}
+
+window.addEventListener('resize', () => {
+  scrollToBottom();
+});
 </script>
 
 </body>
