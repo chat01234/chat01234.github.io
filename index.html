@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chat Privado</title>
 
 <style>
@@ -26,7 +26,7 @@ body{
   flex-direction:column;
 }
 
-/* HEADER FIJO */
+/* HEADER */
 
 .header{
   background:#075E54;
@@ -71,6 +71,7 @@ body{
   margin:10px 0;
   border-radius:8px;
   border:1px solid #ccc;
+  font-size:16px; /* evita zoom */
 }
 
 .login button{
@@ -80,6 +81,7 @@ body{
   border-radius:8px;
   background:#25D366;
   color:white;
+  font-size:16px;
 }
 
 /* CHAT */
@@ -136,7 +138,7 @@ body{
   margin-top:5px;
 }
 
-/* FOOTER FIJO */
+/* FOOTER */
 
 .footer{
   position:fixed;
@@ -155,6 +157,7 @@ body{
   padding:10px;
   border-radius:20px;
   border:1px solid #ccc;
+  font-size:16px; /* evita zoom */
 }
 
 .footer button{
@@ -191,7 +194,8 @@ body{
 </div>
 
 <div class="footer" id="chatFooter" style="display:none;">
-  <input type="file" id="imageInput" accept="image/*" capture="environment" hidden>
+  <!-- Quitamos capture -->
+  <input type="file" id="imageInput" accept="image/*" hidden>
   <button onclick="document.getElementById('imageInput').click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
   <button onclick="sendMessage()">➤</button>
