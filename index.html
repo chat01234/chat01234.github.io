@@ -2,91 +2,137 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat Privado</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#141e30,#243b55);
+  font-family:Arial, sans-serif;
+  background:#e5ddd5;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
 
-.card{
+.container{
+  width:100%;
+  max-width:420px;
+  height:100vh;
   background:white;
-  width:400px;
-  padding:25px;
-  border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  display:flex;
+  flex-direction:column;
 }
 
-h2{
+.header{
+  background:#075E54;
+  color:white;
+  padding:15px;
   text-align:center;
+  font-weight:bold;
+}
+
+.login{
+  padding:20px;
 }
 
 input{
   width:100%;
-  padding:10px;
+  padding:12px;
   margin:8px 0;
   border-radius:8px;
   border:1px solid #ccc;
+  font-size:16px;
 }
 
 button{
   width:100%;
-  padding:10px;
+  padding:12px;
   border:none;
   border-radius:8px;
-  background:#1e88e5;
+  background:#25D366;
   color:white;
   font-size:16px;
   cursor:pointer;
 }
 
-button:hover{
-  background:#1565c0;
-}
-
 .chat{
   display:none;
   flex-direction:column;
-  height:500px;
+  height:100%;
 }
 
 .messages{
   flex:1;
   overflow-y:auto;
-  border:1px solid #ddd;
-  padding:10px;
-  border-radius:8px;
-  margin-bottom:10px;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
 }
 
-.msg{
-  background:#f1f1f1;
-  padding:6px;
+.message{
+  max-width:75%;
+  padding:10px;
   margin:5px 0;
-  border-radius:6px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+.sent{
+  align-self:flex-end;
+  background:#DCF8C6;
+}
+
+.received{
+  align-self:flex-start;
+  background:white;
+  border:1px solid #ddd;
+}
+
+.username{
+  font-weight:bold;
+  font-size:12px;
+  margin-bottom:3px;
+}
+
+.footer{
+  display:flex;
+  padding:10px;
+  border-top:1px solid #ccc;
+}
+
+.footer input{
+  flex:1;
+  margin:0;
+}
+
+.footer button{
+  width:90px;
+  margin-left:5px;
 }
 </style>
 </head>
 <body>
 
-<div class="card" id="login">
-  <h2>Login</h2>
+<div class="container">
+
+<div class="header">Chat Privado</div>
+
+<div class="login" id="loginSection">
   <input type="text" id="username" placeholder="Usuario">
   <input type="password" id="password" placeholder="Contraseña">
   <button onclick="login()">Entrar</button>
 </div>
 
-<div class="card chat" id="chat">
-  <h2>Chat</h2>
+<div class="chat" id="chatSection">
   <div class="messages" id="messages"></div>
-  <input type="text" id="messageInput" placeholder="Escribe mensaje">
-  <button onclick="sendMessage()">Enviar</button>
+  <div class="footer">
+    <input type="text" id="messageInput" placeholder="Escribe mensaje">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
+
 </div>
 
 <script type="module">
@@ -105,6 +151,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let currentUser = null;
+
 window.login = async function(){
   const user = document.getElementById("username").value;
   const pass = document.getElementById("password").value;
@@ -120,8 +168,9 @@ window.login = async function(){
   if(snapshot.empty){
     alert("Usuario o contraseña incorrectos");
   } else {
-    document.getElementById("login").style.display="none";
-    document.getElementById("chat").style.display="flex";
+    currentUser = user;
+    document.getElementById("loginSection").style.display="none";
+    document.getElementById("chatSection").style.display="flex";
     loadMessages();
   }
 }
@@ -132,6 +181,7 @@ window.sendMessage = async function(){
 
   await addDoc(collection(db,"messages"),{
     text:text,
+    username:currentUser,
     createdAt:new Date()
   });
 
@@ -145,14 +195,27 @@ function loadMessages(){
     const messagesDiv=document.getElementById("messages");
     messagesDiv.innerHTML="";
     snapshot.forEach(doc=>{
+      const data = doc.data();
       const div=document.createElement("div");
-      div.classList.add("msg");
-      div.textContent=doc.data().text;
+      div.classList.add("message");
+
+      if(data.username === currentUser){
+        div.classList.add("sent");
+      } else {
+        div.classList.add("received");
+      }
+
+      div.innerHTML = `
+        <div class="username">${data.username}</div>
+        <div>${data.text}</div>
+      `;
+
       messagesDiv.appendChild(div);
     });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 }
-
 </script>
 
 </body>
