@@ -1,105 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Chat Simple</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Profesional</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#1f1c2c,#928dab);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.card{
+  background:white;
+  width:380px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  padding:30px;
+}
+
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#4a47a3;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+button:hover{
+  background:#37349e;
+}
+
+.chat{
+  display:none;
+  flex-direction:column;
+  height:500px;
+}
+
+.messages{
+  flex:1;
+  overflow-y:auto;
+  border:1px solid #ddd;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
+}
+
+.msg{
+  background:#f1f1f1;
+  padding:8px;
+  margin:5px 0;
+  border-radius:6px;
+}
+
+.logout{
+  background:#e63946;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Chat Simple 🔥</h2>
-
-<div id="auth">
+<div class="card" id="authSection">
+  <h2>Iniciar Sesión</h2>
   <input type="email" id="email" placeholder="Correo">
   <input type="password" id="password" placeholder="Contraseña">
-  <button onclick="register()">Registrarse</button>
-  <button onclick="login()">Login</button>
+  <button onclick="login()">Entrar</button>
+  <button onclick="register()">Crear Cuenta</button>
 </div>
 
-<div id="chat" style="display:none;">
-  <button onclick="logout()">Cerrar sesión</button>
-  <div id="messages" style="border:1px solid black; height:200px; overflow:auto; margin-top:10px;"></div>
+<div class="card chat" id="chatSection">
+  <h2>Chat en Vivo</h2>
+  <div class="messages" id="messages"></div>
   <input type="text" id="messageInput" placeholder="Escribe un mensaje">
   <button onclick="sendMessage()">Enviar</button>
+  <button class="logout" onclick="logout()">Cerrar sesión</button>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB8MX9UKhyhatywGhPbpIldBD80wsY38BI",
-    authDomain: "chat01234.firebaseapp.com",
-    projectId: "chat01234",
-    storageBucket: "chat01234.firebasestorage.app",
-    messagingSenderId: "861947372030",
-    appId: "1:861947372030:web:3f1d0c4709b3d96fe6a0af"
-  };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyB8MX9UKhyhatywGhPbpIldBD80wsY38BI",
+  authDomain: "chat01234.firebaseapp.com",
+  projectId: "chat01234",
+  storageBucket: "chat01234.firebasestorage.app",
+  messagingSenderId: "861947372030",
+  appId: "1:861947372030:web:3f1d0c4709b3d96fe6a0af"
+};
 
-  const messagesRef = collection(db, "messages");
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  window.register = function () {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+window.login = function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  signInWithEmailAndPassword(auth,email,password)
+  .catch(error => alert(error.message));
+}
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => alert("Usuario registrado"))
-      .catch(e => alert(e.message));
-  };
+window.register = function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  createUserWithEmailAndPassword(auth,email,password)
+  .catch(error => alert(error.message));
+}
 
-  window.login = function () {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+window.logout = function(){
+  signOut(auth);
+}
 
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => alert("Bienvenido"))
-      .catch(e => alert(e.message));
-  };
+window.sendMessage = async function(){
+  const text = document.getElementById("messageInput").value;
+  if(text==="") return;
+  await addDoc(collection(db,"messages"),{
+    text:text,
+    createdAt:new Date()
+  });
+  document.getElementById("messageInput").value="";
+}
 
-  window.logout = function () {
-    signOut(auth);
-  };
+onAuthStateChanged(auth,user=>{
+  if(user){
+    document.getElementById("authSection").style.display="none";
+    document.getElementById("chatSection").style.display="flex";
 
-  window.sendMessage = async function () {
-    const input = document.getElementById("messageInput");
-    if (input.value.trim() === "") return;
-
-    await addDoc(messagesRef, {
-      text: input.value,
-      user: auth.currentUser.email,
-      createdAt: new Date()
+    const q = query(collection(db,"messages"),orderBy("createdAt"));
+    onSnapshot(q,(snapshot)=>{
+      const messagesDiv=document.getElementById("messages");
+      messagesDiv.innerHTML="";
+      snapshot.forEach(doc=>{
+        const div=document.createElement("div");
+        div.classList.add("msg");
+        div.textContent=doc.data().text;
+        messagesDiv.appendChild(div);
+      });
     });
 
-    input.value = "";
-  };
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById("auth").style.display = "none";
-      document.getElementById("chat").style.display = "block";
-    } else {
-      document.getElementById("auth").style.display = "block";
-      document.getElementById("chat").style.display = "none";
-    }
-  });
-
-  const q = query(messagesRef, orderBy("createdAt"));
-
-  onSnapshot(q, (snapshot) => {
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      messagesDiv.innerHTML += `<p><b>${data.user}:</b> ${data.text}</p>`;
-    });
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
+  }else{
+    document.getElementById("authSection").style.display="block";
+    document.getElementById("chatSection").style.display="none";
+  }
+});
 
 </script>
 
