@@ -136,6 +136,63 @@ body{
   max-width:100%;
   border-radius:8px;
   margin-top:5px;
+  cursor:pointer;
+}
+
+.photo-blur {
+  filter: blur(8px);
+  cursor: pointer;
+}
+
+.photo-status{
+  font-size:11px;
+  opacity:0.7;
+  margin-top:5px;
+}
+
+/* MODAL PARA VER FOTO COMPLETA */
+
+.modal{
+  display:none;
+  position:fixed;
+  z-index:20;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  background-color:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal.active{
+  display:flex;
+}
+
+.modal-content{
+  max-width:90%;
+  max-height:90%;
+  position:relative;
+}
+
+.modal-content img{
+  max-width:100%;
+  max-height:100%;
+  border-radius:8px;
+}
+
+.modal-close{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:white;
+  border:none;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  font-size:20px;
+  cursor:pointer;
+  z-index:21;
 }
 
 /* FOOTER */
@@ -194,18 +251,25 @@ body{
 </div>
 
 <div class="footer" id="chatFooter" style="display:none;">
-  <!-- Quitamos capture -->
   <input type="file" id="imageInput" accept="image/*" hidden>
   <button onclick="document.getElementById('imageInput').click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
   <button onclick="sendMessage()">➤</button>
 </div>
 
+<!-- MODAL PARA VER FOTOS -->
+<div class="modal" id="photoModal">
+  <div class="modal-content" id="modalContent">
+    <button class="modal-close" onclick="closePhotoModal()">✕</button>
+    <img id="modalImage" src="">
+  </div>
+</div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -221,94 +285,147 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-let currentUser=null;
+let currentUser = null;
+let isLoadingMessages = false;
 
 /* LOGIN */
 window.login = async function(){
-  const user=username.value.trim();
-  const pass=password.value.trim();
-  if(!user||!pass) return alert("Completa los campos");
+  const user = username.value.trim();
+  const pass = password.value.trim();
+  if(!user || !pass) return alert("Completa los campos");
 
-  const q=query(collection(db,"users"),
-  where("username","==",user),
-  where("password","==",pass));
+  const q = query(collection(db,"users"),
+    where("username","==",user),
+    where("password","==",pass));
 
-  const snap=await getDocs(q);
+  const snap = await getDocs(q);
 
   if(snap.empty){
     alert("Datos incorrectos");
   }else{
-    currentUser=user;
-    loginSection.style.display="none";
-    chatSection.style.display="flex";
-    chatFooter.style.display="flex";
+    currentUser = user;
+    loginSection.style.display = "none";
+    chatSection.style.display = "flex";
+    chatFooter.style.display = "flex";
     loadMessages();
   }
 }
 
 /* LOGOUT */
-window.logout=function(){
+window.logout = function(){
   location.reload();
 }
 
 /* ENVIAR TEXTO */
-window.sendMessage=async function(){
-  const text=messageInput.value.trim();
-  if(text==="") return;
+window.sendMessage = async function(){
+  const text = messageInput.value.trim();
+  if(text === "") return;
 
   await addDoc(collection(db,"messages"),{
-    text:text,
-    username:currentUser,
-    createdAt:new Date()
+    text: text,
+    username: currentUser,
+    createdAt: new Date()
   });
 
-  messageInput.value="";
+  messageInput.value = "";
 }
 
 /* ENVIAR IMAGEN */
-imageInput.addEventListener("change",async(e)=>{
-  const file=e.target.files[0];
+imageInput.addEventListener("change", async(e)=>{
+  const file = e.target.files[0];
   if(!file) return;
 
-  const storageRef=ref(storage,"chatImages/"+Date.now()+"_"+file.name);
-  await uploadBytes(storageRef,file);
-  const url=await getDownloadURL(storageRef);
+  const storageRef = ref(storage, "chatImages/" + Date.now() + "_" + file.name);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
 
   await addDoc(collection(db,"messages"),{
-    imageUrl:url,
-    username:currentUser,
-    createdAt:new Date()
+    imageUrl: url,
+    username: currentUser,
+    createdAt: new Date(),
+    viewedBy: [] // Array para registrar quién vio la foto
   });
+
+  imageInput.value = "";
 });
+
+/* ABRIR MODAL CON FOTO */
+window.openPhotoModal = async function(docId, imageUrl, isViewed){
+  if(!isViewed && currentUser === "pipe"){
+    // Marcar como visto
+    await updateDoc(doc(db, "messages", docId), {
+      viewedBy: [...(viewedBy || []), currentUser]
+    });
+  }
+  
+  document.getElementById("modalImage").src = imageUrl;
+  document.getElementById("photoModal").classList.add("active");
+}
+
+/* CERRAR MODAL */
+window.closePhotoModal = function(){
+  document.getElementById("photoModal").classList.remove("active");
+}
 
 /* CARGAR MENSAJES */
 function loadMessages(){
-  const q=query(collection(db,"messages"),orderBy("createdAt"));
+  const q = query(collection(db,"messages"), orderBy("createdAt"));
 
-  onSnapshot(q,(snapshot)=>{
-    messages.innerHTML="";
+  onSnapshot(q, (snapshot)=>{
+    if(isLoadingMessages) return;
+    isLoadingMessages = true;
+
+    messages.innerHTML = "";
+    let shouldScroll = true;
 
     snapshot.forEach(doc=>{
-      const data=doc.data();
-      const div=document.createElement("div");
+      const data = doc.data();
+      const docId = doc.id;
+      const div = document.createElement("div");
       div.classList.add("message");
-      div.classList.add(data.username===currentUser?"sent":"received");
+      div.classList.add(data.username === currentUser ? "sent" : "received");
 
-      let content=`<div class="username">${data.username}</div>`;
+      let content = `<div class="username">${data.username}</div>`;
 
       if(data.text){
-        content+=`<div>${data.text}</div>`;
+        content += `<div>${data.text}</div>`;
       }
 
       if(data.imageUrl){
-        content+=`<img src="${data.imageUrl}">`;
+        const viewedBy = data.viewedBy || [];
+        const isViewed = viewedBy.includes("pipe");
+        const isSender = data.username === currentUser;
+
+        // Si es una foto enviada por Angie y la vio Pipe
+        if(isSender && isViewed){
+          // Angie ve que Pipe ya vio la foto
+          content += `<div class="photo-status">Disponible 1 sola vez para pipe</div>`;
+        }
+        // Si es una foto de Angie y Pipe no la ha visto
+        else if(!isSender && !isViewed){
+          // Pipe ve la foto pixeleada
+          content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openPhotoModal('${docId}', '${data.imageUrl}', false)" alt="Foto">`;
+        }
+        // Si es una foto de Angie y Pipe ya la vió
+        else if(!isSender && isViewed){
+          // Pipe ya vio la foto
+          content += `<div class="photo-status">Foto vista</div>`;
+        }
+        // Si es una foto que Pipe envió (siempre visible)
+        else if(isSender){
+          content += `<img src="${data.imageUrl}" onclick="openPhotoModal('${docId}', '${data.imageUrl}', true)" alt="Foto">`;
+        }
       }
 
-      div.innerHTML=content;
+      div.innerHTML = content;
       messages.appendChild(div);
     });
 
-    messages.scrollTop=messages.scrollHeight;
+    // Scroll al final
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+      isLoadingMessages = false;
+    }, 0);
   });
 }
 </script>
