@@ -63,7 +63,7 @@ body{
   padding:0;
   width:30px;
   height:30px;
-  display:flex;
+  display:none;
   justify-content:center;
   align-items:center;
   position:relative;
@@ -317,17 +317,25 @@ body{
   text-align:center;
   max-width:300px;
   box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
 }
 
 .confirmation-content h3{
   margin:0 0 15px 0;
   color:#333;
+  user-select:none;
+  -webkit-user-select:none;
 }
 
 .confirmation-content p{
   color:#666;
   margin:0 0 20px 0;
   font-size:14px;
+  user-select:none;
+  -webkit-user-select:none;
 }
 
 .confirmation-buttons{
@@ -342,6 +350,10 @@ body{
   border-radius:6px;
   cursor:pointer;
   font-size:14px;
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
 }
 
 .btn-cancel{
@@ -501,7 +513,7 @@ window.login = async function(){
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("chatSection").style.display = "flex";
     document.getElementById("chatFooter").style.display = "flex";
-    document.getElementById("menuBtn").style.display = "block";
+    document.getElementById("menuBtn").style.display = "flex";
     loadMessages();
   }
 }
