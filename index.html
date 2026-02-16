@@ -6,13 +6,12 @@
 <title>Chat Privado</title>
 
 <style>
+*{box-sizing:border-box;}
+
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#e5ddd5;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  font-family:'Segoe UI', sans-serif;
+  background:#ece5dd;
   height:100vh;
 }
 
@@ -20,30 +19,56 @@ body{
   width:100%;
   max-width:420px;
   height:100vh;
+  margin:auto;
   background:white;
   display:flex;
   flex-direction:column;
+  box-shadow:0 0 20px rgba(0,0,0,0.2);
 }
+
+/* HEADER */
 
 .header{
   background:#075E54;
   color:white;
   padding:15px;
-  text-align:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   font-weight:bold;
 }
 
+.logout{
+  background:#128C7E;
+  border:none;
+  color:white;
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+/* LOGIN */
+
 .login{
-  padding:20px;
+  margin:auto;
+  width:85%;
+  max-width:320px;
+  text-align:center;
+}
+
+.login h2{
+  color:#075E54;
+  margin-bottom:25px;
 }
 
 input{
   width:100%;
   padding:12px;
-  margin:8px 0;
+  margin:10px 0;
   border-radius:8px;
   border:1px solid #ccc;
-  font-size:16px;
+  font-size:15px;
 }
 
 button{
@@ -53,9 +78,16 @@ button{
   border-radius:8px;
   background:#25D366;
   color:white;
-  font-size:16px;
+  font-size:15px;
   cursor:pointer;
+  transition:0.2s;
 }
+
+button:hover{
+  opacity:0.9;
+}
+
+/* CHAT */
 
 .chat{
   display:none;
@@ -69,14 +101,18 @@ button{
   padding:15px;
   display:flex;
   flex-direction:column;
+  background:#ece5dd;
 }
+
+/* MENSAJES */
 
 .message{
   max-width:75%;
   padding:10px;
   margin:5px 0;
-  border-radius:10px;
+  border-radius:12px;
   font-size:14px;
+  word-wrap:break-word;
 }
 
 .sent{
@@ -92,14 +128,18 @@ button{
 
 .username{
   font-weight:bold;
-  font-size:12px;
+  font-size:11px;
   margin-bottom:3px;
+  opacity:0.6;
 }
+
+/* FOOTER FIJO */
 
 .footer{
   display:flex;
   padding:10px;
-  border-top:1px solid #ccc;
+  border-top:1px solid #ddd;
+  background:white;
 }
 
 .footer input{
@@ -108,18 +148,23 @@ button{
 }
 
 .footer button{
-  width:90px;
+  width:80px;
   margin-left:5px;
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
 
-<div class="header">Chat Privado</div>
+<div class="header">
+  <span>Chat Privado</span>
+  <button class="logout" onclick="logout()">Salir</button>
+</div>
 
 <div class="login" id="loginSection">
+  <h2>Bienvenido</h2>
   <input type="text" id="username" placeholder="Usuario">
   <input type="password" id="password" placeholder="Contraseña">
   <button onclick="login()">Entrar</button>
@@ -153,9 +198,22 @@ const db = getFirestore(app);
 
 let currentUser = null;
 
+/* -------- RESTAURAR SESIÓN -------- */
+window.addEventListener("load",()=>{
+  const savedUser = localStorage.getItem("chatUser");
+  if(savedUser){
+    currentUser = savedUser;
+    showChat();
+    loadMessages();
+  }
+});
+
+/* -------- LOGIN -------- */
 window.login = async function(){
-  const user = document.getElementById("username").value;
-  const pass = document.getElementById("password").value;
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
+
+  if(!user || !pass) return alert("Completa los campos");
 
   const q = query(
     collection(db,"users"),
@@ -169,14 +227,30 @@ window.login = async function(){
     alert("Usuario o contraseña incorrectos");
   } else {
     currentUser = user;
-    document.getElementById("loginSection").style.display="none";
-    document.getElementById("chatSection").style.display="flex";
+    localStorage.setItem("chatUser", user);
+    showChat();
     loadMessages();
   }
 }
 
+/* -------- LOGOUT -------- */
+window.logout = function(){
+  localStorage.removeItem("chatUser");
+  currentUser = null;
+  document.getElementById("chatSection").style.display="none";
+  document.getElementById("loginSection").style.display="block";
+}
+
+/* -------- MOSTRAR CHAT -------- */
+function showChat(){
+  document.getElementById("loginSection").style.display="none";
+  document.getElementById("chatSection").style.display="flex";
+}
+
+/* -------- ENVIAR MENSAJE -------- */
 window.sendMessage = async function(){
-  const text = document.getElementById("messageInput").value;
+  const input = document.getElementById("messageInput");
+  const text = input.value.trim();
   if(text==="") return;
 
   await addDoc(collection(db,"messages"),{
@@ -185,15 +259,24 @@ window.sendMessage = async function(){
     createdAt:new Date()
   });
 
-  document.getElementById("messageInput").value="";
+  input.value="";
 }
 
+/* ENTER ENVÍA */
+document.addEventListener("keypress",function(e){
+  if(e.key==="Enter" && currentUser){
+    sendMessage();
+  }
+});
+
+/* -------- CARGAR MENSAJES -------- */
 function loadMessages(){
   const q = query(collection(db,"messages"),orderBy("createdAt"));
 
   onSnapshot(q,(snapshot)=>{
     const messagesDiv=document.getElementById("messages");
     messagesDiv.innerHTML="";
+
     snapshot.forEach(doc=>{
       const data = doc.data();
       const div=document.createElement("div");
