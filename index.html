@@ -719,13 +719,42 @@ window.closePhotoModal = function(){
   document.getElementById("photoModal").classList.remove("active");
 }
 
-/* MOSTRAR MENÚ DE OPCIONES DEL MENSAJE */
+/* MOSTRAR MENÚ DE OPCIONES DEL MENSAJE - MANTIENE DENTRO DE LA PANTALLA */
 function showMessageMenu(x, y, docId, messageData) {
   const menu = document.getElementById("messageMenu");
-  const viewport = window.innerHeight;
+  const menuWidth = 150;
+  const menuHeight = 100;
+  const padding = 10;
+  
+  // Obtener dimensiones de la ventana
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  // Calcular posición inicial
+  let left = x;
   let top = y;
-  if (y + 100 > viewport) top = y - 100;
-  menu.style.left = x + "px";
+  
+  // Ajustar LEFT: si se sale por la derecha, mueve a la izquierda
+  if (left + menuWidth + padding > windowWidth) {
+    left = windowWidth - menuWidth - padding;
+  }
+  
+  // Ajustar si se sale por la izquierda
+  if (left - padding < 0) {
+    left = padding;
+  }
+  
+  // Ajustar TOP: si se sale por abajo, mueve hacia arriba
+  if (top + menuHeight + padding > windowHeight) {
+    top = windowHeight - menuHeight - padding;
+  }
+  
+  // Ajustar si se sale por arriba
+  if (top - padding < 0) {
+    top = padding;
+  }
+  
+  menu.style.left = left + "px";
   menu.style.top = top + "px";
   menu.style.display = "block";
   menuOpenTime = Date.now();
@@ -753,7 +782,7 @@ function showReplyPreview(messageData){
   const preview = document.getElementById("replyPreview");
   const replyText = document.getElementById("replyText");
   if(messageData.text) replyText.textContent = messageData.text.slice(0,100);
-  else if(messageData.imageUrl) replyText.textContent = "���� Imagen";
+  else if(messageData.imageUrl) replyText.textContent = "📸 Imagen";
   else replyText.textContent = "";
   preview.style.display = "block";
   document.getElementById("messageInput").focus();
@@ -793,7 +822,7 @@ function addMessageListeners(element, docId, messageData){
       if(pressStarted) {
         element.classList.add("long-press");
         const touch = e.touches[0];
-        showMessageMenu(touch.clientX, touch.clientY - 50, docId, messageData);
+        showMessageMenu(touch.clientX, touch.clientY, docId, messageData);
       }
     }, 500);
   });
