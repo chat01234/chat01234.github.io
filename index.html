@@ -515,7 +515,7 @@ body{
 
 <!-- MENU DE OPCIONES DEL MENSAJE (Responde o Borra) -->
 <div class="message-menu" id="messageMenu">
-  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left;">↩��� Responder</button>
+  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left;">↩️ Responder</button>
   <button id="deleteMsgBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;color:#c00;font-size:15px;cursor:pointer;text-align:left;">🗑️ Eliminar</button>
 </div>
 
@@ -561,6 +561,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentUser = null;
+let currentUserUID = null;
 let lastMessageCount = 0;
 let selectedMessageId = null;
 let pendingDeleteType = null;
@@ -598,6 +599,12 @@ window.login = async function(){
     alert("Datos incorrectos");
   }else{
     currentUser = user;
+    
+    // ✅ CAMBIO 1: Obtener el UID del usuario
+    const userData = snap.docs[0].data();
+    currentUserUID = userData.uid;
+    localStorage.setItem('userUID', userData.uid);
+    
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("chatSection").style.display = "flex";
     document.getElementById("chatFooter").style.display = "flex";
@@ -608,6 +615,7 @@ window.login = async function(){
 
 /* LOGOUT */
 window.logout = function(){
+  localStorage.removeItem('userUID');
   location.reload();
 }
 
@@ -706,7 +714,10 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   }
 
   const folder = isVideo ? "chatVideos" : "chatImages";
-  const storageRef = ref(storage, folder + "/" + Date.now() + "_" + file.name);
+  
+  // ✅ CAMBIO 2: Agregar UID a la ruta
+  const userUID = localStorage.getItem('userUID') || currentUserUID;
+  const storageRef = ref(storage, folder + "/" + userUID + "/" + Date.now() + "_" + file.name);
   
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
