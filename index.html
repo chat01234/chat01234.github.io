@@ -413,7 +413,7 @@ body{
 
 .message-menu {
   display: none;
-  position: fixed;
+  position: absolute;
   z-index: 9999;
   background: white;
   border-radius: 8px;
@@ -719,37 +719,31 @@ window.closePhotoModal = function(){
   document.getElementById("photoModal").classList.remove("active");
 }
 
-/* MOSTRAR MENÚ DE OPCIONES DEL MENSAJE - MANTIENE DENTRO DE LA PANTALLA */
+/* MOSTRAR MENÚ DE OPCIONES - SIEMPRE DENTRO DEL CONTENEDOR */
 function showMessageMenu(x, y, docId, messageData) {
   const menu = document.getElementById("messageMenu");
+  const container = document.querySelector(".container");
+  const containerRect = container.getBoundingClientRect();
   const menuWidth = 150;
   const menuHeight = 100;
   const padding = 10;
   
-  // Obtener dimensiones de la ventana
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  // Posición relativa al contenedor
+  let left = x - containerRect.left;
+  let top = y - containerRect.top;
   
-  // Calcular posición inicial
-  let left = x;
-  let top = y;
-  
-  // Ajustar LEFT: si se sale por la derecha, mueve a la izquierda
-  if (left + menuWidth + padding > windowWidth) {
-    left = windowWidth - menuWidth - padding;
+  // Ajustar LEFT
+  if (left + menuWidth + padding > containerRect.width) {
+    left = containerRect.width - menuWidth - padding;
   }
-  
-  // Ajustar si se sale por la izquierda
   if (left - padding < 0) {
     left = padding;
   }
   
-  // Ajustar TOP: si se sale por abajo, mueve hacia arriba
-  if (top + menuHeight + padding > windowHeight) {
-    top = windowHeight - menuHeight - padding;
+  // Ajustar TOP
+  if (top + menuHeight + padding > containerRect.height) {
+    top = containerRect.height - menuHeight - padding;
   }
-  
-  // Ajustar si se sale por arriba
   if (top - padding < 0) {
     top = padding;
   }
