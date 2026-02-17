@@ -244,7 +244,20 @@ body{
   display:block;
 }
 
+.message video{
+  max-width:100%;
+  border-radius:8px;
+  margin-top:5px;
+  display:block;
+  background:#000;
+}
+
 .photo-blur {
+  filter:blur(8px);
+  cursor:pointer;
+}
+
+.video-blur {
   filter:blur(8px);
   cursor:pointer;
 }
@@ -281,7 +294,8 @@ body{
   position:relative;
 }
 
-.modal-content img{
+.modal-content img,
+.modal-content video{
   max-width:100%;
   max-height:100%;
   border-radius:8px;
@@ -493,23 +507,24 @@ body{
 </div>
 
 <div class="footer" id="chatFooter" style="display:none;">
-  <input type="file" id="imageInput" accept="image/*" hidden>
-  <button onclick="document.getElementById('imageInput').click()">📷</button>
+  <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+  <button onclick="document.getElementById('fileInput').click()">📷</button>
   <input type="text" id="messageInput" placeholder="Mensaje">
   <button onclick="sendMessage()">➤</button>
 </div>
 
 <!-- MENU DE OPCIONES DEL MENSAJE (Responde o Borra) -->
 <div class="message-menu" id="messageMenu">
-  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left;">↩️ Responder</button>
+  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left;">↩��� Responder</button>
   <button id="deleteMsgBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;color:#c00;font-size:15px;cursor:pointer;text-align:left;">🗑️ Eliminar</button>
 </div>
 
-<!-- MODAL PARA VER FOTO COMPLETA -->
-<div class="modal" id="photoModal">
+<!-- MODAL PARA VER FOTO O VIDEO COMPLETO -->
+<div class="modal" id="mediaModal">
   <div class="modal-content" id="modalContent">
-    <button class="modal-close" onclick="closePhotoModal()">✕</button>
-    <img id="modalImage" src="">
+    <button class="modal-close" onclick="closeMediaModal()">✕</button>
+    <img id="modalImage" src="" style="display:none;">
+    <video id="modalVideo" style="display:none;" controls></video>
   </div>
 </div>
 
@@ -666,7 +681,7 @@ window.sendMessage = async function(){
   if (replyToMessage) {
     messageData.replyTo = {
       id: replyToMessage.id,
-      text: replyToMessage.text || "(Imagen)",
+      text: replyToMessage.text || "(Imagen/Video)",
       username: replyToMessage.username
     };
   }
@@ -677,28 +692,45 @@ window.sendMessage = async function(){
   window.cancelReply();
 }
 
-/* ENVIAR IMAGEN */
-document.getElementById("imageInput").addEventListener("change", async(e)=>{
+/* ENVIAR IMAGEN O VIDEO */
+document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
 
-  const storageRef = ref(storage, "chatImages/" + Date.now() + "_" + file.name);
+  const isVideo = file.type.startsWith("video/");
+  const isImage = file.type.startsWith("image/");
+
+  if(!isVideo && !isImage) {
+    alert("Por favor selecciona una imagen o video");
+    return;
+  }
+
+  const folder = isVideo ? "chatVideos" : "chatImages";
+  const storageRef = ref(storage, folder + "/" + Date.now() + "_" + file.name);
+  
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
 
-  await addDoc(collection(db,"messages"),{
-    imageUrl: url,
+  const messageData = {
     username: currentUser,
     createdAt: new Date(),
     viewedBy: [],
-    type: "image"
-  });
+    type: isVideo ? "video" : "image"
+  };
 
-  document.getElementById("imageInput").value = "";
+  if(isVideo) {
+    messageData.videoUrl = url;
+  } else {
+    messageData.imageUrl = url;
+  }
+
+  await addDoc(collection(db,"messages"), messageData);
+
+  document.getElementById("fileInput").value = "";
 });
 
-/* ABRIR MODAL CON FOTO */
-window.openPhotoModal = async function(docId, imageUrl, username){
+/* ABRIR MODAL CON FOTO O VIDEO */
+window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(username !== currentUser){
     try {
       const messageDoc = doc(db, "messages", docId);
@@ -710,13 +742,26 @@ window.openPhotoModal = async function(docId, imageUrl, username){
     }
   }
   
-  document.getElementById("modalImage").src = imageUrl;
-  document.getElementById("photoModal").classList.add("active");
+  const modalImage = document.getElementById("modalImage");
+  const modalVideo = document.getElementById("modalVideo");
+  
+  if(mediaType === "video") {
+    modalImage.style.display = "none";
+    modalVideo.style.display = "block";
+    modalVideo.src = mediaUrl;
+  } else {
+    modalVideo.style.display = "none";
+    modalImage.style.display = "block";
+    modalImage.src = mediaUrl;
+  }
+  
+  document.getElementById("mediaModal").classList.add("active");
 }
 
 /* CERRAR MODAL */
-window.closePhotoModal = function(){
-  document.getElementById("photoModal").classList.remove("active");
+window.closeMediaModal = function(){
+  document.getElementById("mediaModal").classList.remove("active");
+  document.getElementById("modalVideo").pause();
 }
 
 /* MOSTRAR MENÚ DE OPCIONES - SIEMPRE DENTRO DEL CONTENEDOR */
@@ -777,6 +822,7 @@ function showReplyPreview(messageData){
   const replyText = document.getElementById("replyText");
   if(messageData.text) replyText.textContent = messageData.text.slice(0,100);
   else if(messageData.imageUrl) replyText.textContent = "📸 Imagen";
+  else if(messageData.videoUrl) replyText.textContent = "🎥 Video";
   else replyText.textContent = "";
   preview.style.display = "block";
   document.getElementById("messageInput").focus();
@@ -892,7 +938,26 @@ function loadMessages(){
           if(wasViewed){
             content += `<div class="photo-status">📸 Foto vista</div>`;
           } else {
-            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openPhotoModal('${docId}', '${data.imageUrl}', '${data.username}')" alt="Foto">`;
+            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto">`;
+          }
+        }
+      }
+
+      if(data.videoUrl){
+        const viewedBy = data.viewedBy || [];
+        const wasViewed = viewedBy.length > 0;
+        const isSender = data.username === currentUser;
+        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
+
+        if(isSender){
+          content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
+        } else {
+          if(wasViewed){
+            content += `<div class="photo-status">🎥 Video visto</div>`;
+          } else {
+            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:5px; background:#000;">
+              <source src="${data.videoUrl}" type="video/mp4">
+            </video>`;
           }
         }
       }
@@ -905,6 +970,7 @@ function loadMessages(){
         id: docId,
         text: data.text,
         imageUrl: data.imageUrl,
+        videoUrl: data.videoUrl,
         username: data.username
       });
     });
@@ -933,10 +999,10 @@ window.addEventListener('resize', () => {
   scrollToBottom();
 });
 
-// Cerrar modal de foto al hacer click fuera
-document.getElementById("photoModal").addEventListener("click", function(e){
+// Cerrar modal de media al hacer click fuera
+document.getElementById("mediaModal").addEventListener("click", function(e){
   if(e.target === this){
-    closePhotoModal();
+    closeMediaModal();
   }
 });
 
