@@ -270,7 +270,7 @@ body{
   display:block;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .message video{
@@ -281,7 +281,7 @@ body{
   background:#000;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .photo-blur {
@@ -345,7 +345,7 @@ body{
   border-radius:8px;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .modal-close{
@@ -815,7 +815,7 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   document.getElementById("fileInput").value = "";
 });
 
-/* ABRIR MODAL CON FOTO O VIDEO */
+/* ABRIR MODAL CON FOTO O VIDEO - CORREGIDO */
 window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(username !== currentUser){
     try {
@@ -834,7 +834,17 @@ window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(mediaType === "video") {
     modalImage.style.display = "none";
     modalVideo.style.display = "block";
-    modalVideo.src = mediaUrl;
+    
+    // ✅ CORREGIDO: Reinicia el video correctamente
+    modalVideo.pause();
+    modalVideo.currentTime = 0;
+    modalVideo.src = "";
+    
+    // Espera un tick para que se limpie bien
+    setTimeout(() => {
+      modalVideo.src = mediaUrl;
+      modalVideo.load();
+    }, 50);
   } else {
     modalVideo.style.display = "none";
     modalImage.style.display = "block";
@@ -1024,7 +1034,7 @@ function loadMessages(){
           if(wasViewed){
             content += `<div class="photo-status">📸 Foto vista</div>`;
           } else {
-            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto" style="-webkit-user-select:none; -webkit-touch-callout:none;">`;
+            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto" style="-webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">`;
           }
         }
       }
@@ -1041,7 +1051,7 @@ function loadMessages(){
           if(wasViewed){
             content += `<div class="photo-status">🎥 Video visto</div>`;
           } else {
-            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:5px; background:#000; -webkit-user-select:none; -webkit-touch-callout:none;" controlsList="nodownload">
+            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:5px; background:#000; -webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">
               <source src="${data.videoUrl}" type="video/mp4">
             </video>`;
           }
