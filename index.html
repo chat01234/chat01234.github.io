@@ -1,47 +1,1114 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Página no disponible</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<title>ChatGpt Login</title>
 
 <style>
-body{
+*{
+  box-sizing:border-box;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-callout: none;
+}
+
+html, body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#f2f2f2;
+  padding:0;
+  font-family:'Segoe UI', sans-serif;
+  background:#ece5dd;
+  height:100%;
+  width:100%;
+  overflow:hidden;
+  position:fixed;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-app-region: no-drag;
+}
+
+body{
   display:flex;
   justify-content:center;
-  align-items:center;
-  height:100vh;
-  text-align:center;
 }
 
-.box{
+.container{
+  width:100%;
+  max-width:420px;
+  height:100%;
   background:white;
-  padding:40px;
-  border-radius:12px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  -webkit-user-select: none;
 }
 
-h1{
-  font-size:28px;
+/* HEADER */
+
+.header{
+  background:#075E54;
+  color:white;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:bold;
+  flex-shrink:0;
+  height:55px;
+  z-index:10;
+  -webkit-user-select: none;
+}
+
+.header-buttons{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.menu-btn{
+  background:none;
+  border:none;
+  color:white;
+  font-size:24px;
+  cursor:pointer;
+  padding:0;
+  width:30px;
+  height:30px;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+  -webkit-user-select: none;
+}
+
+.menu-dropdown{
+  position:absolute;
+  top:40px;
+  right:0;
+  background:white;
+  border:1px solid #ddd;
+  border-radius:8px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  z-index:25;
+  min-width:150px;
+  display:none;
+  -webkit-user-select: none;
+}
+
+.menu-dropdown.active{
+  display:block;
+}
+
+.menu-dropdown button{
+  width:100%;
+  padding:12px 15px;
+  border:none;
+  background:none;
+  text-align:left;
+  cursor:pointer;
+  color:#333;
+  font-size:14px;
+  border-bottom:1px solid #eee;
+  -webkit-user-select: none;
+}
+
+.menu-dropdown button:last-child{
+  border-bottom:none;
+}
+
+.menu-dropdown button:hover{
+  background:#f0f0f0;
+}
+
+.menu-dropdown button.delete-chat{
+  color:#d32f2f;
+}
+
+.logout{
+  background:#128C7E;
+  border:none;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:12px;
+  cursor:pointer;
+  -webkit-user-select: none;
+}
+
+/* LOGIN */
+
+.login{
+  margin:auto;
+  width:85%;
+  max-width:300px;
+  text-align:center;
+  -webkit-user-select: none;
+}
+
+.login h2{
+  color:#075E54;
+  -webkit-user-select: none;
+}
+
+.login input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+  -webkit-user-select: none;
+}
+
+.login button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#25D366;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  -webkit-user-select: none;
+}
+
+/* CHAT */
+
+.chat{
+  display:none;
+  flex-direction:column;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+
+.messages{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  background:#ece5dd;
+  min-height:0;
+  -webkit-user-select: none;
+}
+
+/* MENSAJES */
+
+.message{
+  max-width:85%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:12px;
+  font-size:14px;
+  word-wrap:break-word;
+  word-break:break-word;
+  white-space:normal;
+  overflow-wrap:break-word;
+  flex-shrink:0;
+  position:relative;
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-user-callout:none;
+  transition:all 0.2s ease;
+}
+
+.sent{
+  align-self:flex-end;
+  background:#DCF8C6;
+}
+
+.received{
+  align-self:flex-start;
+  background:white;
+  border:1px solid #ddd;
+}
+
+.message.selected{
+  background:#ffeb3b !important;
+  opacity:0.8;
+}
+
+.message.long-press{
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+
+.username{
+  font-weight:bold;
+  font-size:11px;
+  opacity:0.6;
+  margin-bottom:3px;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-user-callout:none;
+  user-select:none;
+}
+
+.message-text{
+  word-wrap:break-word;
+  word-break:break-word;
+  white-space:pre-wrap;
+  overflow-wrap:break-word;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-user-callout:none;
+  user-select:none;
+}
+
+.message img{
+  max-width:100%;
+  border-radius:8px;
+  margin-top:5px;
+  cursor:pointer;
+  display:block;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.message video{
+  max-width:100%;
+  border-radius:8px;
+  margin-top:5px;
+  display:block;
+  background:#000;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.photo-blur {
+  filter:blur(8px);
+  cursor:pointer;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.video-blur {
+  filter:blur(8px);
+  cursor:pointer;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.photo-status{
+  font-size:12px;
+  opacity:0.8;
+  margin-top:5px;
+  font-weight:500;
+  -webkit-user-select: none;
+  -webkit-user-callout: none;
+}
+
+/* MODAL PARA VER FOTO COMPLETA */
+
+.modal{
+  display:none;
+  position:fixed;
+  z-index:20;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  background-color:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.modal.active{
+  display:flex;
+}
+
+.modal-content{
+  max-width:90%;
+  max-height:90%;
+  position:relative;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.modal-content img,
+.modal-content video{
+  max-width:100%;
+  max-height:100%;
+  border-radius:8px;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.modal-close{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:white;
+  border:none;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  font-size:20px;
+  cursor:pointer;
+  z-index:21;
+  -webkit-user-select: none;
+}
+
+/* MODAL DE CONFIRMACIÓN */
+
+.confirmation-modal{
+  display:none;
+  position:fixed;
+  z-index:30;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  background-color:rgba(0,0,0,0.5);
+  justify-content:center;
+  align-items:center;
+  -webkit-user-select: none;
+}
+
+.confirmation-modal.active{
+  display:flex;
+}
+
+.confirmation-content{
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  text-align:center;
+  max-width:300px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  -webkit-user-callout: none;
+}
+
+.confirmation-content h3{
+  margin:0 0 15px 0;
+  color:#333;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.confirmation-content p{
+  color:#666;
+  margin:0 0 20px 0;
+  font-size:14px;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.confirmation-buttons{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.confirmation-buttons button{
+  padding:10px 20px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  -webkit-user-callout: none;
+}
+
+.btn-cancel{
+  background:#ccc;
   color:#333;
 }
 
-p{
-  color:#666;
-  margin-top:10px;
+.btn-delete{
+  background:#d32f2f;
+  color:white;
+}
+
+/* FOOTER */
+
+.footer{
+  display:flex;
+  padding:8px;
+  border-top:1px solid #ddd;
+  background:white;
+  align-items:center;
+  gap:5px;
+  flex-shrink:0;
+  z-index:15;
+  -webkit-user-select: none;
+}
+
+.footer input[type="text"]{
+  flex:1;
+  padding:10px;
+  border-radius:20px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+
+.footer button{
+  border:none;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  font-size:18px;
+  background:#25D366;
+  color:white;
+  cursor:pointer;
+  flex-shrink:0;
+  -webkit-user-select: none;
+}
+
+/* ESTILOS PARA RESPONDER MENSAJES */
+
+.message-menu {
+  display: none;
+  position: absolute;
+  z-index: 9999;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  overflow: hidden;
+  min-width: 150px;
+  -webkit-user-select: none;
+}
+
+.message-menu button {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+  -webkit-user-select: none;
+}
+
+.message-menu button:first-child {
+  border-bottom: 1px solid #eee;
+}
+
+.message-menu button:hover {
+  background: #f5f5f5;
+}
+
+.reply-ref {
+  border-left: 4px solid #25d366;
+  background: #f9f9f9;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+  -webkit-user-select: none;
+}
+
+.reply-ref b {
+  color: #075E54;
+  display: block;
+  margin-bottom: 3px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-<h1>Esta página ya no se encuentra disponible</h1>
-<p>El sitio ha sido desactivado.</p>
+<div class="container">
+
+<div class="header">
+  <span>ChatGpt Login</span>
+  <div class="header-buttons">
+    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋮</button>
+    <div class="menu-dropdown" id="menuDropdown">
+      <button onclick="deleteChatConfirm()" class="delete-chat">🗑️ Borrar Chat</button>
+    </div>
+    <button class="logout" onclick="logout()">Salir</button>
+  </div>
 </div>
+
+<div class="login" id="loginSection">
+  <h2>Iniciar Sesión</h2>
+  <input type="text" id="username" placeholder="Usuario">
+  <input type="password" id="password" placeholder="Contraseña">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div class="chat" id="chatSection">
+  <div class="messages" id="messages"></div>
+</div>
+
+<!-- VISTA PREVIA DE RESPUESTA -->
+<div id="replyPreview" style="display:none; padding:10px 15px; border-left:4px solid #25d366; background:#f0f0f0; position:relative; border-bottom:1px solid #ddd; user-select:none; -webkit-user-select:none;">
+  <div style="font-weight:bold;color:#075E54;font-size:12px; -webkit-user-select:none;">Respondiendo a:</div>
+  <span id="replyText" style="color:#333; font-size:13px; display:block; margin-top:5px; -webkit-user-select:none;"></span>
+  <button onclick="window.cancelReply()" style="position:absolute; right:10px; top:8px; background:none; border:none; font-size:18px; cursor:pointer; color:#999; -webkit-user-select:none;">✕</button>
+</div>
+
+<div class="footer" id="chatFooter" style="display:none;">
+  <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+  <button onclick="document.getElementById('fileInput').click()">📷</button>
+  <input type="text" id="messageInput" placeholder="Mensaje">
+  <button onclick="sendMessage()">➤</button>
+</div>
+
+<!-- MENU DE OPCIONES DEL MENSAJE (Responde o Borra) -->
+<div class="message-menu" id="messageMenu">
+  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left; -webkit-user-select:none;">↩️ Responder</button>
+  <button id="deleteMsgBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;color:#c00;font-size:15px;cursor:pointer;text-align:left; -webkit-user-select:none;">🗑️ Eliminar</button>
+</div>
+
+<!-- MODAL PARA VER FOTO O VIDEO COMPLETO -->
+<div class="modal" id="mediaModal">
+  <div class="modal-content" id="modalContent">
+    <button class="modal-close" onclick="closeMediaModal()">✕</button>
+    <img id="modalImage" src="" style="display:none; -webkit-user-select:none; -webkit-touch-callout:none;">
+    <video id="modalVideo" style="display:none; -webkit-user-select:none; -webkit-touch-callout:none;" controls controlsList="nodownload"></video>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div class="confirmation-modal" id="confirmationModal">
+  <div class="confirmation-content">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p id="confirmText">¿Estás seguro?</p>
+    <div class="confirmation-buttons">
+      <button class="btn-cancel" onclick="closeConfirmation()">Cancelar</button>
+      <button class="btn-delete" id="confirmBtn" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB8MX9UKhyhatywGhPbpIldBD80wsY38BI",
+  authDomain: "chat01234.firebaseapp.com",
+  projectId: "chat01234",
+  storageBucket: "chat01234.firebasestorage.app",
+  messagingSenderId: "861947372030",
+  appId: "1:861947372030:web:3f1d0c4709b3d96fe6a0af"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let currentUser = null;
+let currentUserUID = null;
+let lastMessageCount = 0;
+let selectedMessageId = null;
+let pendingDeleteType = null;
+let replyToMessage = null;
+let menuOpenTime = 0;
+
+// 🔐 PREVENIR SCREENSHOT EN iOS
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'PrintScreen' || e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+  }
+});
+
+// 🔐 PREVENIR LONG PRESS EN iOS
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+    e.preventDefault();
+  }
+});
+
+// 🔐 DESHABILITAR DRAG & DROP
+document.addEventListener('dragstart', (e) => {
+  e.preventDefault();
+});
+
+/* MENU DROPDOWN */
+window.toggleMenu = function(){
+  const menu = document.getElementById("menuDropdown");
+  menu.classList.toggle("active");
+}
+
+/* CERRAR MENU AL HACER CLICK FUERA */
+document.addEventListener("click", function(event){
+  const menu = document.getElementById("menuDropdown");
+  const menuBtn = document.getElementById("menuBtn");
+  if(!menu.contains(event.target) && !menuBtn.contains(event.target)){
+    menu.classList.remove("active");
+  }
+});
+
+/* LOGIN */
+window.login = async function(){
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if(!user || !pass) return alert("Completa los campos");
+
+  const q = query(collection(db,"users"),
+    where("username","==",user),
+    where("password","==",pass));
+
+  const snap = await getDocs(q);
+
+  if(snap.empty){
+    alert("Datos incorrectos");
+  }else{
+    currentUser = user;
+    
+    // ✅ CAMBIO 1: Obtener el UID del usuario
+    const userData = snap.docs[0].data();
+    currentUserUID = userData.uid;
+    localStorage.setItem('userUID', userData.uid);
+    
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("chatSection").style.display = "flex";
+    document.getElementById("chatFooter").style.display = "flex";
+    document.getElementById("menuBtn").style.display = "flex";
+    loadMessages();
+  }
+}
+
+/* LOGOUT */
+window.logout = function(){
+  localStorage.removeItem('userUID');
+  location.reload();
+}
+
+/* BORRAR CHAT - CONFIRMACIÓN */
+window.deleteChatConfirm = function(){
+  document.getElementById("confirmTitle").textContent = "Borrar Chat";
+  document.getElementById("confirmText").textContent = "¿Estás seguro de que deseas borrar todos los mensajes?";
+  document.getElementById("confirmBtn").textContent = "Borrar";
+  pendingDeleteType = "chat";
+  document.getElementById("confirmationModal").classList.add("active");
+  document.getElementById("menuDropdown").classList.remove("active");
+}
+
+/* CERRAR CONFIRMACIÓN */
+window.closeConfirmation = function(){
+  document.getElementById("confirmationModal").classList.remove("active");
+  selectedMessageId = null;
+  pendingDeleteType = null;
+}
+
+/* CONFIRMAR ELIMINACIÓN */
+window.confirmDelete = async function(){
+  if(pendingDeleteType === "chat"){
+    await deleteAllMessages();
+  } else if(pendingDeleteType === "message"){
+    await deleteMessage(selectedMessageId);
+  }
+  closeConfirmation();
+}
+
+/* ELIMINAR TODOS LOS MENSAJES */
+async function deleteAllMessages(){
+  try {
+    const q = query(collection(db,"messages"));
+    const snapshot = await getDocs(q);
+    
+    for(const document of snapshot.docs){
+      await deleteDoc(doc(db, "messages", document.id));
+    }
+    
+    alert("Chat eliminado correctamente");
+  } catch(error) {
+    console.error("Error al eliminar chat:", error);
+    alert("Error al eliminar el chat");
+  }
+}
+
+/* ELIMINAR UN MENSAJE */
+async function deleteMessage(docId){
+  try {
+    await deleteDoc(doc(db, "messages", docId));
+  } catch(error) {
+    console.error("Error al eliminar mensaje:", error);
+    alert("Error al eliminar el mensaje");
+  }
+}
+
+/* ENVIAR TEXTO CON OPCIÓN DE RESPUESTA */
+window.sendMessage = async function(){
+  const text = document.getElementById("messageInput").value.trim();
+  if(text === "") return;
+
+  const messageData = {
+    text: text,
+    username: currentUser,
+    createdAt: new Date(),
+    type: "text"
+  };
+
+  // Si va a responder a un mensaje, incluye la referencia
+  if (replyToMessage) {
+    messageData.replyTo = {
+      id: replyToMessage.id,
+      text: replyToMessage.text || "(Imagen/Video)",
+      username: replyToMessage.username
+    };
+  }
+
+  await addDoc(collection(db,"messages"), messageData);
+
+  document.getElementById("messageInput").value = "";
+  window.cancelReply();
+}
+
+/* ENVIAR IMAGEN O VIDEO */
+document.getElementById("fileInput").addEventListener("change", async(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const isVideo = file.type.startsWith("video/");
+  const isImage = file.type.startsWith("image/");
+
+  if(!isVideo && !isImage) {
+    alert("Por favor selecciona una imagen o video");
+    return;
+  }
+
+  const folder = isVideo ? "chatVideos" : "chatImages";
+  
+  // ✅ CAMBIO 2: Agregar UID a la ruta
+  const userUID = localStorage.getItem('userUID') || currentUserUID;
+  const storageRef = ref(storage, folder + "/" + userUID + "/" + Date.now() + "_" + file.name);
+  
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+
+  const messageData = {
+    username: currentUser,
+    createdAt: new Date(),
+    viewedBy: [],
+    type: isVideo ? "video" : "image"
+  };
+
+  if(isVideo) {
+    messageData.videoUrl = url;
+  } else {
+    messageData.imageUrl = url;
+  }
+
+  await addDoc(collection(db,"messages"), messageData);
+
+  document.getElementById("fileInput").value = "";
+});
+
+/* ABRIR MODAL CON FOTO O VIDEO - CORREGIDO */
+window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
+  if(username !== currentUser){
+    try {
+      const messageDoc = doc(db, "messages", docId);
+      await updateDoc(messageDoc, {
+        viewedBy: [currentUser]
+      });
+    } catch(error) {
+      console.log("Error al actualizar:", error);
+    }
+  }
+  
+  const modalImage = document.getElementById("modalImage");
+  const modalVideo = document.getElementById("modalVideo");
+  
+  if(mediaType === "video") {
+    modalImage.style.display = "none";
+    modalVideo.style.display = "block";
+    
+    // ✅ CORREGIDO: Reinicia el video correctamente
+    modalVideo.pause();
+    modalVideo.currentTime = 0;
+    modalVideo.src = "";
+    
+    // Espera un tick para que se limpie bien
+    setTimeout(() => {
+      modalVideo.src = mediaUrl;
+      modalVideo.load();
+    }, 50);
+  } else {
+    modalVideo.style.display = "none";
+    modalImage.style.display = "block";
+    modalImage.src = mediaUrl;
+  }
+  
+  document.getElementById("mediaModal").classList.add("active");
+}
+
+/* CERRAR MODAL */
+window.closeMediaModal = function(){
+  document.getElementById("mediaModal").classList.remove("active");
+  document.getElementById("modalVideo").pause();
+}
+
+/* MOSTRAR MENÚ DE OPCIONES - SIEMPRE DENTRO DEL CONTENEDOR */
+function showMessageMenu(x, y, docId, messageData) {
+  const menu = document.getElementById("messageMenu");
+  const container = document.querySelector(".container");
+  const containerRect = container.getBoundingClientRect();
+  const menuWidth = 150;
+  const menuHeight = 100;
+  const padding = 10;
+  
+  // Posición relativa al contenedor
+  let left = x - containerRect.left;
+  let top = y - containerRect.top;
+  
+  // Ajustar LEFT
+  if (left + menuWidth + padding > containerRect.width) {
+    left = containerRect.width - menuWidth - padding;
+  }
+  if (left - padding < 0) {
+    left = padding;
+  }
+  
+  // Ajustar TOP
+  if (top + menuHeight + padding > containerRect.height) {
+    top = containerRect.height - menuHeight - padding;
+  }
+  if (top - padding < 0) {
+    top = padding;
+  }
+  
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+  menu.style.display = "block";
+  menuOpenTime = Date.now();
+  selectedMessageId = docId;
+
+  // Botón "Responder"
+  document.getElementById("replyBtn").onclick = function() {
+    menu.style.display = "none";
+    showReplyPreview(messageData);
+    replyToMessage = messageData;
+  };
+  // Botón "Eliminar"
+  document.getElementById("deleteMsgBtn").onclick = function() {
+    menu.style.display = "none";
+    document.getElementById("confirmTitle").textContent = "Borrar Mensaje";
+    document.getElementById("confirmText").textContent = "¿Deseas eliminar este mensaje?";
+    document.getElementById("confirmBtn").textContent = "Borrar";
+    pendingDeleteType = "message";
+    document.getElementById("confirmationModal").classList.add("active");
+  };
+}
+
+/* MOSTRAR VISTA PREVIA DE RESPUESTA */
+function showReplyPreview(messageData){
+  const preview = document.getElementById("replyPreview");
+  const replyText = document.getElementById("replyText");
+  if(messageData.text) replyText.textContent = messageData.text.slice(0,100);
+  else if(messageData.imageUrl) replyText.textContent = "📸 Imagen";
+  else if(messageData.videoUrl) replyText.textContent = "🎥 Video";
+  else replyText.textContent = "";
+  preview.style.display = "block";
+  document.getElementById("messageInput").focus();
+}
+
+/* CANCELAR RESPUESTA */
+window.cancelReply = function() {
+  document.getElementById("replyPreview").style.display = "none";
+  replyToMessage = null;
+};
+
+/* OCULTAR MENÚ AL HACER CLICK FUERA */
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("messageMenu");
+  if (menu && !menu.contains(e.target) && Date.now() - menuOpenTime > 100) {
+    menu.style.display = "none";
+  }
+});
+
+/* SCROLL AL FINAL */
+function scrollToBottom() {
+  const messagesDiv = document.getElementById("messages");
+  setTimeout(() => {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }, 50);
+}
+
+/* LONG PRESS EN MENSAJES */
+function addMessageListeners(element, docId, messageData){
+  let pressTimer;
+  let pressStarted = false;
+
+  // Long press móvil
+  element.addEventListener("touchstart", (e) => {
+    pressStarted = true;
+    pressTimer = setTimeout(() => {
+      if(pressStarted) {
+        element.classList.add("long-press");
+        const touch = e.touches[0];
+        showMessageMenu(touch.clientX, touch.clientY, docId, messageData);
+      }
+    }, 500);
+  });
+
+  element.addEventListener("touchend", () => {
+    pressStarted = false;
+    clearTimeout(pressTimer);
+    element.classList.remove("long-press");
+  });
+
+  element.addEventListener("touchmove", () => {
+    pressStarted = false;
+    clearTimeout(pressTimer);
+  });
+
+  // Click derecho desktop
+  element.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    element.classList.add("long-press");
+    showMessageMenu(e.clientX, e.clientY, docId, messageData);
+  });
+
+  element.addEventListener("click", () => {
+    element.classList.remove("long-press");
+  });
+}
+
+/* CARGAR MENSAJES */
+function loadMessages(){
+  const q = query(collection(db,"messages"), orderBy("createdAt"));
+
+  onSnapshot(q, (snapshot)=>{
+    const messagesDiv = document.getElementById("messages");
+    const messageCount = snapshot.size;
+    const isFirstLoad = lastMessageCount === 0;
+    const isNewMessage = messageCount > lastMessageCount;
+    
+    lastMessageCount = messageCount;
+    
+    messagesDiv.innerHTML = "";
+
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const docId = doc.id;
+      
+      const div = document.createElement("div");
+      div.classList.add("message");
+      div.classList.add(data.username === currentUser ? "sent" : "received");
+
+      let content = `<div class="username">${data.username}</div>`;
+
+      // Mostrar referencia si responde a un mensaje
+      if(data.replyTo) {
+        content += `<div class="reply-ref">
+          <b>↩️ Respondiendo a ${data.replyTo.username}:</b>
+          <span>${escapeHtml(data.replyTo.text || "").substring(0, 80)}</span>
+        </div>`;
+      }
+
+      if(data.text){
+        content += `<div class="message-text">${escapeHtml(data.text)}</div>`;
+      }
+
+      if(data.imageUrl){
+        const viewedBy = data.viewedBy || [];
+        const wasViewed = viewedBy.length > 0;
+        const isSender = data.username === currentUser;
+        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
+
+        if(isSender){
+          content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
+        } else {
+          if(wasViewed){
+            content += `<div class="photo-status">📸 Foto vista</div>`;
+          } else {
+            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto" style="-webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">`;
+          }
+        }
+      }
+
+      if(data.videoUrl){
+        const viewedBy = data.viewedBy || [];
+        const wasViewed = viewedBy.length > 0;
+        const isSender = data.username === currentUser;
+        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
+
+        if(isSender){
+          content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
+        } else {
+          if(wasViewed){
+            content += `<div class="photo-status">🎥 Video visto</div>`;
+          } else {
+            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:5px; background:#000; -webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">
+              <source src="${data.videoUrl}" type="video/mp4">
+            </video>`;
+          }
+        }
+      }
+
+      div.innerHTML = content;
+      messagesDiv.appendChild(div);
+      
+      // Agregar listeners para long press
+      addMessageListeners(div, docId, {
+        id: docId,
+        text: data.text,
+        imageUrl: data.imageUrl,
+        videoUrl: data.videoUrl,
+        username: data.username
+      });
+    });
+
+    if(isFirstLoad || isNewMessage){
+      scrollToBottom();
+    }
+  });
+}
+
+/* ESCAPE HTML PARA SEGURIDAD */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/* AJUSTAR LAYOUT AL CAMBIAR TAMAÑO */
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', () => {
+    scrollToBottom();
+  });
+}
+
+window.addEventListener('resize', () => {
+  scrollToBottom();
+});
+
+// Cerrar modal de media al hacer click fuera
+document.getElementById("mediaModal").addEventListener("click", function(e){
+  if(e.target === this){
+    closeMediaModal();
+  }
+});
+
+// Cerrar modal de confirmación al hacer click fuera
+document.getElementById("confirmationModal").addEventListener("click", function(e){
+  if(e.target === this){
+    closeConfirmation();
+  }
+});
+</script>
 
 </body>
 </html>
