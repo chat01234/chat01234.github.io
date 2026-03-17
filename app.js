@@ -1,4 +1,4 @@
-```javascript
+
 // IMPORTAR FIREBASE
 import { db, storage, auth } from "./firebase.js";
 
@@ -208,4 +208,4 @@ function loadMessages(){
 function cancelReply(){
   replyToMessage = null;
 }
-```
+
