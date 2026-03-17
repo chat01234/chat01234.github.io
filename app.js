@@ -1,9 +1,8 @@
-// IMPORTAR FIREBASE
 import { db, storage, auth } from "./firebase.js";
 
 import {
   collection, addDoc, onSnapshot, orderBy,
-  updateDoc, doc, deleteDoc, query
+  doc, deleteDoc, query
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import {
@@ -17,44 +16,25 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-
-// VARIABLES
 let currentUser = null;
 let currentUserUID = null;
-let lastMessageCount = 0;
 let selectedMessageId = null;
 let pendingDeleteType = null;
-let replyToMessage = null;
-
-
-// =======================
-// 🔐 AUTH
-// =======================
 
 // LOGIN
 window.login = async function(){
   const email = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  if(!email || !password){
-    alert("Completa los campos");
-    return;
-  }
-
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    currentUser = user.email;
-    currentUserUID = user.uid;
-
+    currentUser = userCredential.user.email;
+    currentUserUID = userCredential.user.uid;
     startApp();
-
-  } catch (error) {
-    alert("Error: " + error.message);
+  } catch (e) {
+    alert(e.message);
   }
 };
-
 
 // REGISTRO
 window.register = async function(){
@@ -63,22 +43,20 @@ window.register = async function(){
 
   try {
     await createUserWithEmailAndPassword(auth, email, password);
-    alert("Usuario creado correctamente");
-  } catch (error) {
-    alert("Error: " + error.message);
+    alert("Cuenta creada");
+  } catch (e) {
+    alert(e.message);
   }
 };
 
-
-// SESIÓN AUTOMÁTICA
-onAuthStateChanged(auth, (user) => {
-  if (user) {
+// SESIÓN
+onAuthStateChanged(auth, (user)=>{
+  if(user){
     currentUser = user.email;
     currentUserUID = user.uid;
     startApp();
   }
 });
-
 
 // LOGOUT
 window.logout = function(){
@@ -86,55 +64,40 @@ window.logout = function(){
   location.reload();
 };
 
-
-// =======================
-// 🚀 INICIAR APP
-// =======================
+// INICIAR APP
 function startApp(){
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("chatSection").style.display = "flex";
   document.getElementById("chatFooter").style.display = "flex";
-  document.getElementById("menuBtn").style.display = "flex";
-
+  document.getElementById("menuBtn").style.display = "block";
   loadMessages();
 }
-
-
-// =======================
-// 💬 MENSAJES
-// =======================
 
 // ENVIAR MENSAJE
 window.sendMessage = async function(){
   const text = document.getElementById("messageInput").value.trim();
   if(!text) return;
 
-  const data = {
-    text,
+  await addDoc(collection(db,"messages"), {
+    text: text,
     username: currentUser,
     uid: currentUserUID,
-    createdAt: new Date(),
-    type: "text"
-  };
-
-  await addDoc(collection(db,"messages"), data);
+    createdAt: new Date()
+  });
 
   document.getElementById("messageInput").value = "";
 };
 
-
-// SUBIR ARCHIVO
+// SUBIR ARCHIVO (SIN $)
 document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
 
-  const isVideo = file.type.startsWith("video/");
-  const folder = isVideo ? "chatVideos" : "chatImages";
+  const folder = file.type.startsWith("video/") ? "chatVideos" : "chatImages";
 
-  // 🔥 SIN TEMPLATE STRING (evita error $)
-  const filePath = folder + "/" + currentUserUID + "/" + Date.now() + "_" + file.name;
+  const path = folder + "/" + currentUserUID + "/" + Date.now() + "_" + file.name;
 
-  const storageRef = ref(storage, filePath);
+  const storageRef = ref(storage, path);
 
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
@@ -142,11 +105,10 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const data = {
     username: currentUser,
     uid: currentUserUID,
-    createdAt: new Date(),
-    type: isVideo ? "video" : "image"
+    createdAt: new Date()
   };
 
-  if(isVideo){
+  if(file.type.startsWith("video/")){
     data.videoUrl = url;
   } else {
     data.imageUrl = url;
@@ -155,68 +117,39 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   await addDoc(collection(db,"messages"), data);
 });
 
-
-// BORRAR MENSAJE
-window.confirmDelete = async function(){
-  if(pendingDeleteType === "message"){
-    await deleteDoc(doc(db,"messages",selectedMessageId));
-  }
-};
-
-
-// =======================
-// 📥 CARGAR MENSAJES
-// =======================
+// CARGAR MENSAJES
 function loadMessages(){
   const q = query(collection(db,"messages"), orderBy("createdAt"));
 
   onSnapshot(q, (snapshot)=>{
     const container = document.getElementById("messages");
-
-    if(snapshot.size === lastMessageCount) return;
-    lastMessageCount = snapshot.size;
-
     container.innerHTML = "";
 
     snapshot.forEach(docSnap=>{
       const data = docSnap.data();
-      const id = docSnap.id;
 
       const div = document.createElement("div");
-      div.className = `message ${data.uid === currentUserUID ? "sent" : "received"}`;
+      div.className = data.uid === currentUserUID ? "message sent" : "message received";
 
-      let html = `<div class="username">${data.username}</div>`;
+      let html = "<b>" + data.username + "</b><br>";
 
       if(data.text){
-        html += `<div class="message-text">${data.text}</div>`;
+        html += data.text;
       }
 
       if(data.imageUrl){
-        html += `<img src="${data.imageUrl}">`;
+        html += "<br><img src='" + data.imageUrl + "'>";
       }
 
       if(data.videoUrl){
-        html += `<video controls><source src="${data.videoUrl}"></video>`;
+        html += "<br><video controls src='" + data.videoUrl + "'></video>";
       }
 
       div.innerHTML = html;
       container.appendChild(div);
-
-      div.addEventListener("contextmenu",(e)=>{
-        e.preventDefault();
-        selectedMessageId = id;
-        pendingDeleteType = "message";
-      });
     });
-
-    container.scrollTop = container.scrollHeight;
   });
 }
-
-
-// =======================
-// 🧩 FUNCIONES FALTANTES (HTML)
-// =======================
 
 // MENU
 window.toggleMenu = function(){
@@ -224,18 +157,7 @@ window.toggleMenu = function(){
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 };
 
-// BORRAR CHAT (placeholder)
 window.deleteChatConfirm = function(){
-  alert("Función borrar chat aún no implementada");
-};
-
-// CERRAR CONFIRMACIÓN
-window.closeConfirmation = function(){
-  document.getElementById("confirmationModal").classList.remove("active");
-};
-
-// RESPUESTA
-window.cancelReply = function(){
-  replyToMessage = null;
+  alert("Próximamente");
 };
 
