@@ -23,16 +23,18 @@ let pendingDeleteType = null;
 
 // LOGIN
 window.login = async function(){
-  const email = document.getElementById("username").value.trim();
+  let username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
+
+  const email = username + "@chat.com";
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    currentUser = userCredential.user.email;
+    currentUser = username;
     currentUserUID = userCredential.user.uid;
     startApp();
   } catch (e) {
-    alert(e.message);
+    alert(e.code);
   }
 };
 
