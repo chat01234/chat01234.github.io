@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 
 <meta charset="UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- FIX WARNING -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 
-<title>ChatGpt Login</title>
+<title>Chat App</title>
 
-<!-- Optimización de carga -->
 <link rel="preconnect" href="https://www.gstatic.com">
-
-<!-- Estilos -->
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -26,65 +23,47 @@
 <div class="container">
 
 <!-- HEADER -->
-
 <div class="header">
 
-<span>ChatGpt Login</span>
+<span>Chat App</span>
 
 <div class="header-buttons">
 
-<button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋮</button>
+<button class="menu-btn" id="menuBtn" onclick="toggleMenu()" style="display:none;">⋮</button>
 
-<div class="menu-dropdown" id="menuDropdown">
+<div class="menu-dropdown" id="menuDropdown" style="display:none;">
 <button onclick="deleteChatConfirm()" class="delete-chat">🗑️ Borrar Chat</button>
 </div>
 
-<button class="logout" onclick="logout()">Salir</button>
+<button class="logout" onclick="logout()" style="display:none;">Salir</button>
 
 </div>
 
 </div>
 
 <!-- LOGIN -->
-
 <div class="login" id="loginSection">
 
 <h2>Iniciar Sesión</h2>
 
-<input type="text" id="username" placeholder="Usuario">
+<input type="email" id="username" placeholder="Correo">
 
 <input type="password" id="password" placeholder="Contraseña">
 
 <button onclick="login()">Entrar</button>
 
-</div>
-
-<!-- CHAT -->
-
-<div class="chat" id="chatSection">
-
-<div class="messages" id="messages"></div>
-
-</div>
-
-<!-- RESPUESTA PREVIEW -->
-
-<div id="replyPreview" style="display:none; padding:10px 15px; border-left:4px solid #25d366; background:#f0f0f0; position:relative; border-bottom:1px solid #ddd; user-select:none;">
-
-<div style="font-weight:bold;color:#075E54;font-size:12px;">
-Respondiendo a:
-</div>
-
-<span id="replyText" style="color:#333; font-size:13px; display:block; margin-top:5px;"></span>
-
-<button onclick="cancelReply()" style="position:absolute; right:10px; top:8px; background:none; border:none; font-size:18px; cursor:pointer; color:#999;">
-✕
+<button onclick="register()" style="margin-top:10px; background:#555;">
+Crear cuenta
 </button>
 
 </div>
 
-<!-- FOOTER -->
+<!-- CHAT -->
+<div class="chat" id="chatSection" style="display:none;">
+<div class="messages" id="messages"></div>
+</div>
 
+<!-- FOOTER -->
 <div class="footer" id="chatFooter" style="display:none;">
 
 <input type="file" id="fileInput" accept="image/*,video/*" hidden>
@@ -97,67 +76,26 @@ Respondiendo a:
 
 </div>
 
-<!-- MENU MENSAJES -->
-
-<div class="message-menu" id="messageMenu">
-
-<button id="replyBtn">
-↩️ Responder
-</button>
-
-<button id="deleteMsgBtn" style="color:#c00;">
-🗑️ Eliminar
-</button>
-
-</div>
-
-<!-- MODAL MEDIA -->
-
-<div class="modal" id="mediaModal">
-
-<div class="modal-content" id="modalContent">
-
-<button class="modal-close" onclick="closeMediaModal()">✕</button>
-
-<img id="modalImage" src="" style="display:none;">
-
-<video id="modalVideo" style="display:none;" controls controlsList="nodownload"></video>
-
-</div>
-
-</div>
-
 <!-- MODAL CONFIRMACION -->
-
 <div class="confirmation-modal" id="confirmationModal">
-
 <div class="confirmation-content">
 
-<h3 id="confirmTitle">Confirmar</h3>
-
-<p id="confirmText">¿Estás seguro?</p>
+<h3>Confirmar</h3>
+<p>¿Eliminar mensaje?</p>
 
 <div class="confirmation-buttons">
+<button onclick="closeConfirmation()">Cancelar</button>
+<button onclick="confirmDelete()">Eliminar</button>
+</div>
 
-<button class="btn-cancel" onclick="closeConfirmation()">
-Cancelar
-</button>
-
-<button class="btn-delete" id="confirmBtn" onclick="confirmDelete()">
-Eliminar
-</button>
-
+</div>
 </div>
 
 </div>
 
-</div>
-
-</div>
-
-<!-- APP JS -->
-
+<!-- APP -->
 <script type="module" src="app.js"></script>
 
 </body>
 </html>
+
