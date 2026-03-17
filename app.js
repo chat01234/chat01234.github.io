@@ -1,4 +1,3 @@
-
 // IMPORTAR FIREBASE
 import { db, storage, auth } from "./firebase.js";
 
@@ -28,12 +27,19 @@ let pendingDeleteType = null;
 let replyToMessage = null;
 
 
+// =======================
 // 🔐 AUTH
+// =======================
 
 // LOGIN
 window.login = async function(){
   const email = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
+
+  if(!email || !password){
+    alert("Completa los campos");
+    return;
+  }
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -81,7 +87,9 @@ window.logout = function(){
 };
 
 
-// INICIAR APP
+// =======================
+// 🚀 INICIAR APP
+// =======================
 function startApp(){
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("chatSection").style.display = "flex";
@@ -92,7 +100,11 @@ function startApp(){
 }
 
 
-// ENVIAR MENSAJE TEXTO
+// =======================
+// 💬 MENSAJES
+// =======================
+
+// ENVIAR MENSAJE
 window.sendMessage = async function(){
   const text = document.getElementById("messageInput").value.trim();
   if(!text) return;
@@ -100,27 +112,18 @@ window.sendMessage = async function(){
   const data = {
     text,
     username: currentUser,
-    uid: currentUserUID, // 🔥 IMPORTANTE
+    uid: currentUserUID,
     createdAt: new Date(),
-    type:"text"
+    type: "text"
   };
-
-  if(replyToMessage){
-    data.replyTo = {
-      id: replyToMessage.id,
-      text: replyToMessage.text || "(media)",
-      username: replyToMessage.username
-    };
-  }
 
   await addDoc(collection(db,"messages"), data);
 
   document.getElementById("messageInput").value = "";
-  cancelReply();
 };
 
 
-// SUBIR IMAGEN / VIDEO
+// SUBIR ARCHIVO
 document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -128,21 +131,26 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const isVideo = file.type.startsWith("video/");
   const folder = isVideo ? "chatVideos" : "chatImages";
 
-  const storageRef = ref(storage, `${folder}/${currentUserUID}/${Date.now()}_${file.name}`);
+  // 🔥 SIN TEMPLATE STRING (evita error $)
+  const filePath = folder + "/" + currentUserUID + "/" + Date.now() + "_" + file.name;
+
+  const storageRef = ref(storage, filePath);
 
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
 
   const data = {
     username: currentUser,
-    uid: currentUserUID, // 🔥 IMPORTANTE
+    uid: currentUserUID,
     createdAt: new Date(),
-    viewedBy: [],
     type: isVideo ? "video" : "image"
   };
 
-  if(isVideo) data.videoUrl = url;
-  else data.imageUrl = url;
+  if(isVideo){
+    data.videoUrl = url;
+  } else {
+    data.imageUrl = url;
+  }
 
   await addDoc(collection(db,"messages"), data);
 });
@@ -156,7 +164,9 @@ window.confirmDelete = async function(){
 };
 
 
-// CARGAR MENSAJES
+// =======================
+// 📥 CARGAR MENSAJES
+// =======================
 function loadMessages(){
   const q = query(collection(db,"messages"), orderBy("createdAt"));
 
@@ -173,7 +183,7 @@ function loadMessages(){
       const id = docSnap.id;
 
       const div = document.createElement("div");
-      div.className = `message ${data.uid===currentUserUID?"sent":"received"}`;
+      div.className = `message ${data.uid === currentUserUID ? "sent" : "received"}`;
 
       let html = `<div class="username">${data.username}</div>`;
 
@@ -204,8 +214,28 @@ function loadMessages(){
 }
 
 
+// =======================
+// 🧩 FUNCIONES FALTANTES (HTML)
+// =======================
+
+// MENU
+window.toggleMenu = function(){
+  const menu = document.getElementById("menuDropdown");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+};
+
+// BORRAR CHAT (placeholder)
+window.deleteChatConfirm = function(){
+  alert("Función borrar chat aún no implementada");
+};
+
+// CERRAR CONFIRMACIÓN
+window.closeConfirmation = function(){
+  document.getElementById("confirmationModal").classList.remove("active");
+};
+
 // RESPUESTA
-function cancelReply(){
+window.cancelReply = function(){
   replyToMessage = null;
-}
+};
 
