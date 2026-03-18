@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
-<title>ChatGpt Login</title>
+<meta name="apple-mobile-web-app-title" content="ChatGPT">
+<title>ChatGPT - Login</title>
 
 <style>
 *{
@@ -19,8 +20,8 @@
 html, body{
   margin:0;
   padding:0;
-  font-family:'Segoe UI', sans-serif;
-  background:#ece5dd;
+  font-family:'Segoe UI', -apple-system, sans-serif;
+  background:#10a37f;
   height:100%;
   width:100%;
   overflow:hidden;
@@ -46,7 +47,194 @@ body{
   -webkit-user-select: none;
 }
 
-/* HEADER */
+/* ========== LOGIN OVERLAY (DARK MODE) ========== */
+
+.login-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: #1a1a1a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:100;
+  -webkit-user-select: none;
+  padding:20px;
+  overflow-y:auto;
+}
+
+.login-overlay.hidden{
+  display:none;
+}
+
+.login-card{
+  background:#2d2d2d;
+  border-radius:16px;
+  padding:30px;
+  width:100%;
+  max-width:360px;
+  text-align:center;
+  -webkit-user-select: none;
+}
+
+.login-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+.login-header h1{
+  margin:0;
+  font-size:24px;
+  color:white;
+  font-weight:700;
+  -webkit-user-select: none;
+}
+
+.login-close-btn{
+  background:none;
+  border:none;
+  color:#999;
+  font-size:28px;
+  cursor:pointer;
+  padding:0;
+  width:40px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-user-select: none;
+  transition:color 0.2s;
+}
+
+.login-close-btn:hover{
+  color:white;
+}
+
+.login-title{
+  color:white;
+  font-size:24px;
+  font-weight:700;
+  margin-bottom:10px;
+  text-align:center;
+  -webkit-user-select: none;
+}
+
+.login-subtitle{
+  color:#999;
+  font-size:14px;
+  margin-bottom:30px;
+  text-align:center;
+  -webkit-user-select: none;
+}
+
+.login-buttons-group{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.login-btn{
+  padding:14px;
+  background:none;
+  border:1px solid #444;
+  border-radius:12px;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  transition:border 0.2s;
+  -webkit-user-select: none;
+}
+
+.login-btn:hover{
+  border-color:#666;
+}
+
+.login-btn-icon{
+  font-size:20px;
+}
+
+.login-divider{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  margin:20px 0;
+  color:#666;
+  font-size:13px;
+}
+
+.login-divider::before,
+.login-divider::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:#444;
+}
+
+.login-email-input{
+  width:100%;
+  padding:14px;
+  background:#3a3a3a;
+  border:1px solid #444;
+  border-radius:12px;
+  color:white;
+  font-size:15px;
+  margin-bottom:12px;
+  font-family:inherit;
+  transition:border 0.2s;
+  -webkit-user-select: none;
+}
+
+.login-email-input::placeholder{
+  color:#666;
+}
+
+.login-email-input:focus{
+  outline:none;
+  border-color:#10a37f;
+}
+
+.login-continue-btn{
+  width:100%;
+  padding:12px;
+  background:white;
+  color:black;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  -webkit-user-select: none;
+  transition:opacity 0.2s;
+}
+
+.login-continue-btn:hover{
+  opacity:0.9;
+}
+
+.login-continue-btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+.login-error{
+  color:#ef4444;
+  font-size:13px;
+  margin-top:10px;
+  display:none;
+  text-align:center;
+  -webkit-user-select: none;
+}
+
+/* ========== HEADER ========== */
 
 .header{
   background:#075E54;
@@ -138,44 +326,7 @@ body{
   -webkit-user-select: none;
 }
 
-/* LOGIN */
-
-.login{
-  margin:auto;
-  width:85%;
-  max-width:300px;
-  text-align:center;
-  -webkit-user-select: none;
-}
-
-.login h2{
-  color:#075E54;
-  -webkit-user-select: none;
-}
-
-.login input{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:16px;
-  -webkit-user-select: none;
-}
-
-.login button{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  background:#25D366;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-  -webkit-user-select: none;
-}
-
-/* CHAT */
+/* ========== CHAT ========== */
 
 .chat{
   display:none;
@@ -197,14 +348,14 @@ body{
   -webkit-user-select: none;
 }
 
-/* MENSAJES */
+/* ========== MENSAJES ========== */
 
 .message{
   max-width:85%;
-  padding:10px;
-  margin:5px 0;
+  padding:8px 12px;
+  margin:3px 0;
   border-radius:12px;
-  font-size:14px;
+  font-size:15px;
   word-wrap:break-word;
   word-break:break-word;
   white-space:normal;
@@ -218,6 +369,9 @@ body{
   -webkit-touch-callout:none;
   -webkit-user-callout:none;
   transition:all 0.2s ease;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
 }
 
 .sent{
@@ -242,9 +396,8 @@ body{
 
 .username{
   font-weight:bold;
-  font-size:11px;
+  font-size:10px;
   opacity:0.6;
-  margin-bottom:3px;
   -webkit-user-select:none;
   -webkit-touch-callout:none;
   -webkit-user-callout:none;
@@ -260,12 +413,47 @@ body{
   -webkit-touch-callout:none;
   -webkit-user-callout:none;
   user-select:none;
+  line-height:1.3;
+}
+
+/* ========== MESSAGE CHECKS ========== */
+
+.message-footer{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:3px;
+  font-size:11px;
+  margin-top:1px;
+  line-height:1;
+}
+
+.sent .message-footer{
+  justify-content:flex-end;
+}
+
+.received .message-footer{
+  display:none;
+}
+
+.check-mark{
+  font-size:11px;
+  -webkit-user-select:none;
+  line-height:1;
+}
+
+.check-mark.sent{
+  color:#999;
+}
+
+.check-mark.read{
+  color:#007bff;
 }
 
 .message img{
   max-width:100%;
   border-radius:8px;
-  margin-top:5px;
+  margin-top:3px;
   cursor:pointer;
   display:block;
   -webkit-user-select: none;
@@ -276,7 +464,7 @@ body{
 .message video{
   max-width:100%;
   border-radius:8px;
-  margin-top:5px;
+  margin-top:3px;
   display:block;
   background:#000;
   -webkit-user-select: none;
@@ -301,15 +489,15 @@ body{
 }
 
 .photo-status{
-  font-size:12px;
+  font-size:11px;
   opacity:0.8;
-  margin-top:5px;
+  margin-top:2px;
   font-weight:500;
   -webkit-user-select: none;
-  -webkit-user-callout: none;
+  line-height:1;
 }
 
-/* MODAL PARA VER FOTO COMPLETA */
+/* ========== MODAL ========== */
 
 .modal{
   display:none;
@@ -363,7 +551,7 @@ body{
   -webkit-user-select: none;
 }
 
-/* MODAL DE CONFIRMACIÓN */
+/* ========== CONFIRMATION MODAL ========== */
 
 .confirmation-modal{
   display:none;
@@ -441,7 +629,7 @@ body{
   color:white;
 }
 
-/* FOOTER */
+/* ========== FOOTER ========== */
 
 .footer{
   display:flex;
@@ -476,7 +664,47 @@ body{
   -webkit-user-select: none;
 }
 
-/* ESTILOS PARA RESPONDER MENSAJES */
+/* ========== REPLY PREVIEW ========== */
+
+#replyPreview {
+  display:none;
+  padding:8px 12px;
+  border-left:4px solid #25d366;
+  background:#f0f0f0;
+  position:relative;
+  border-bottom:1px solid #ddd;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+#replyPreview > div:first-child{
+  font-weight:bold;
+  color:#075E54;
+  font-size:11px;
+  -webkit-user-select:none;
+}
+
+#replyText{
+  color:#333;
+  font-size:12px;
+  display:block;
+  margin-top:3px;
+  -webkit-user-select:none;
+}
+
+#replyPreview button{
+  position:absolute;
+  right:10px;
+  top:8px;
+  background:none;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+  color:#999;
+  -webkit-user-select:none;
+}
+
+/* ========== MESSAGE MENU ========== */
 
 .message-menu {
   display: none;
@@ -492,31 +720,36 @@ body{
 
 .message-menu button {
   width: 100%;
-  padding: 14px 20px;
+  padding: 12px 15px;
   border: none;
   background: #fff;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   text-align: left;
   transition: background 0.2s;
   -webkit-user-select: none;
+  border-bottom:1px solid #eee;
 }
 
-.message-menu button:first-child {
-  border-bottom: 1px solid #eee;
+.message-menu button:last-child{
+  border-bottom:none;
 }
 
 .message-menu button:hover {
   background: #f5f5f5;
 }
 
+.message-menu button.delete-msg {
+  color:#c00;
+}
+
 .reply-ref {
   border-left: 4px solid #25d366;
   background: #f9f9f9;
-  padding: 8px;
-  margin-bottom: 8px;
+  padding: 6px;
+  margin-bottom: 4px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.85;
   -webkit-user-select: none;
 }
@@ -524,77 +757,112 @@ body{
 .reply-ref b {
   color: #075E54;
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- ========== LOGIN OVERLAY ========== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>ChatGPT</h1>
+      <button class="login-close-btn" onclick="window.closeLoginModal()">✕</button>
+    </div>
+    
+    <div id="loginMainSection" style="display:block;">
+      <div class="login-title">Iniciar sesión o registrarse</div>
+      <div class="login-subtitle">Obtendrás respuestas más inteligentes, podrás cargar archivos e imágenes, y más.</div>
+      
+      <div class="login-buttons-group">
+        <button class="login-btn" onclick="window.showLoginForm('google')">
+          <span class="login-btn-icon">🔍</span>
+          <span>Continuar con Google</span>
+        </button>
+        <button class="login-btn" onclick="window.showLoginForm('apple')">
+          <span class="login-btn-icon">🍎</span>
+          <span>Continuar con Apple</span>
+        </button>
+        <button class="login-btn" onclick="window.showLoginForm('phone')">
+          <span class="login-btn-icon">☎️</span>
+          <span>Continuar con el teléfono</span>
+        </button>
+      </div>
+      
+      <div class="login-divider">o</div>
+      
+      <input type="text" id="emailInput" class="login-email-input" placeholder="Usuario" style="display:none;">
+      <input type="password" id="passwordInput" class="login-email-input" placeholder="Contraseña" style="display:none;">
+      <button class="login-continue-btn" id="continueBtn" style="display:none;" onclick="window.login()">Continuar</button>
+      <button class="login-continue-btn" id="backBtn" style="display:none;" onclick="window.backToMain()">Volver</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MAIN CONTAINER ========== -->
 <div class="container">
 
-<div class="header">
-  <span>ChatGpt Login</span>
-  <div class="header-buttons">
-    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋮</button>
-    <div class="menu-dropdown" id="menuDropdown">
-      <button onclick="deleteChatConfirm()" class="delete-chat">🗑️ Borrar Chat</button>
-    </div>
-    <button class="logout" onclick="logout()">Salir</button>
-  </div>
-</div>
-
-<div class="login" id="loginSection">
-  <h2>Iniciar Sesión</h2>
-  <input type="text" id="username" placeholder="Usuario">
-  <input type="password" id="password" placeholder="Contraseña">
-  <button onclick="login()">Entrar</button>
-</div>
-
-<div class="chat" id="chatSection">
-  <div class="messages" id="messages"></div>
-</div>
-
-<!-- VISTA PREVIA DE RESPUESTA -->
-<div id="replyPreview" style="display:none; padding:10px 15px; border-left:4px solid #25d366; background:#f0f0f0; position:relative; border-bottom:1px solid #ddd; user-select:none; -webkit-user-select:none;">
-  <div style="font-weight:bold;color:#075E54;font-size:12px; -webkit-user-select:none;">Respondiendo a:</div>
-  <span id="replyText" style="color:#333; font-size:13px; display:block; margin-top:5px; -webkit-user-select:none;"></span>
-  <button onclick="window.cancelReply()" style="position:absolute; right:10px; top:8px; background:none; border:none; font-size:18px; cursor:pointer; color:#999; -webkit-user-select:none;">✕</button>
-</div>
-
-<div class="footer" id="chatFooter" style="display:none;">
-  <input type="file" id="fileInput" accept="image/*,video/*" hidden>
-  <button onclick="document.getElementById('fileInput').click()">📷</button>
-  <input type="text" id="messageInput" placeholder="Mensaje">
-  <button onclick="sendMessage()">➤</button>
-</div>
-
-<!-- MENU DE OPCIONES DEL MENSAJE (Responde o Borra) -->
-<div class="message-menu" id="messageMenu">
-  <button id="replyBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;border-bottom:1px solid #eee;font-size:15px;cursor:pointer;text-align:left; -webkit-user-select:none;">↩️ Responder</button>
-  <button id="deleteMsgBtn" style="width:100%;padding:14px 20px;border:none;background:#fff;color:#c00;font-size:15px;cursor:pointer;text-align:left; -webkit-user-select:none;">🗑️ Eliminar</button>
-</div>
-
-<!-- MODAL PARA VER FOTO O VIDEO COMPLETO -->
-<div class="modal" id="mediaModal">
-  <div class="modal-content" id="modalContent">
-    <button class="modal-close" onclick="closeMediaModal()">✕</button>
-    <img id="modalImage" src="" style="display:none; -webkit-user-select:none; -webkit-touch-callout:none;">
-    <video id="modalVideo" style="display:none; -webkit-user-select:none; -webkit-touch-callout:none;" controls controlsList="nodownload"></video>
-  </div>
-</div>
-
-<!-- MODAL DE CONFIRMACIÓN -->
-<div class="confirmation-modal" id="confirmationModal">
-  <div class="confirmation-content">
-    <h3 id="confirmTitle">Confirmar</h3>
-    <p id="confirmText">¿Estás seguro?</p>
-    <div class="confirmation-buttons">
-      <button class="btn-cancel" onclick="closeConfirmation()">Cancelar</button>
-      <button class="btn-delete" id="confirmBtn" onclick="confirmDelete()">Eliminar</button>
+  <!-- HEADER -->
+  <div class="header">
+    <span>ChatGpt Login</span>
+    <div class="header-buttons">
+      <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋮</button>
+      <div class="menu-dropdown" id="menuDropdown">
+        <button onclick="deleteChatConfirm()" class="delete-chat">🗑️ Borrar Chat</button>
+      </div>
+      <button class="logout" onclick="logout()">Salir</button>
     </div>
   </div>
-</div>
+
+  <!-- CHAT -->
+  <div class="chat" id="chatSection">
+    <div class="messages" id="messages"></div>
+  </div>
+
+  <!-- REPLY PREVIEW -->
+  <div id="replyPreview">
+    <div>Respondiendo a:</div>
+    <span id="replyText"></span>
+    <button onclick="window.cancelReply()">✕</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer" id="chatFooter" style="display:none;">
+    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+    <button onclick="document.getElementById('fileInput').click()">📷</button>
+    <input type="text" id="messageInput" placeholder="Mensaje">
+    <button onclick="sendMessage()">➤</button>
+  </div>
+
+  <!-- MESSAGE MENU -->
+  <div class="message-menu" id="messageMenu">
+    <button id="replyBtn">↩️ Responder</button>
+    <button id="deleteMsgBtn" class="delete-msg">🗑️ Eliminar</button>
+  </div>
+
+  <!-- MEDIA MODAL -->
+  <div class="modal" id="mediaModal">
+    <div class="modal-content" id="modalContent">
+      <button class="modal-close" onclick="closeMediaModal()">✕</button>
+      <img id="modalImage" src="" style="display:none;">
+      <video id="modalVideo" style="display:none;" controls controlsList="nodownload"></video>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="confirmation-modal" id="confirmationModal">
+    <div class="confirmation-content">
+      <h3 id="confirmTitle">Confirmar</h3>
+      <p id="confirmText">¿Estás seguro?</p>
+      <div class="confirmation-buttons">
+        <button class="btn-cancel" onclick="closeConfirmation()">Cancelar</button>
+        <button class="btn-delete" id="confirmBtn" onclick="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -623,33 +891,155 @@ let selectedMessageId = null;
 let pendingDeleteType = null;
 let replyToMessage = null;
 let menuOpenTime = 0;
+let unsubscribeMessages = null;
 
-// 🔐 PREVENIR SCREENSHOT EN iOS
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'PrintScreen' || e.ctrlKey || e.metaKey) {
-    e.preventDefault();
+// ========== CERRAR SESIÓN AL NAVEGAR ==========
+window.addEventListener('pagehide', function() {
+  if (currentUser) {
+    console.log('🔒 Página se va a cerrar - Limpiando sesión');
+    currentUser = null;
+    currentUserUID = null;
+    localStorage.removeItem('userUID');
+    sessionStorage.clear();
   }
 });
 
-// 🔐 PREVENIR LONG PRESS EN iOS
-document.addEventListener('contextmenu', (e) => {
-  if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
-    e.preventDefault();
+// ========== LOGIN FORM VISUAL ==========
+window.showLoginForm = function(method) {
+  document.getElementById("loginMainSection").style.display = "none";
+  document.getElementById("emailInput").style.display = "block";
+  document.getElementById("passwordInput").style.display = "block";
+  document.getElementById("continueBtn").style.display = "block";
+  document.getElementById("backBtn").style.display = "block";
+  
+  document.getElementById("emailInput").value = "";
+  document.getElementById("passwordInput").value = "";
+  document.getElementById("emailInput").focus();
+  
+  console.log('📝 Formulario abierto para:', method);
+}
+
+window.backToMain = function() {
+  document.getElementById("loginMainSection").style.display = "block";
+  document.getElementById("emailInput").style.display = "none";
+  document.getElementById("passwordInput").style.display = "none";
+  document.getElementById("continueBtn").style.display = "none";
+  document.getElementById("backBtn").style.display = "none";
+  document.getElementById("loginError").style.display = "none";
+}
+
+window.closeLoginModal = function() {
+  // No hacer nada - es solo visual, el overlay siempre está visible
+}
+
+// ========== LOGIN ==========
+window.login = async function(){
+  const userInput = document.getElementById("emailInput").value.trim();
+  const passInput = document.getElementById("passwordInput").value.trim();
+  const errorDiv = document.getElementById("loginError");
+  
+  errorDiv.style.display = "none";
+  errorDiv.textContent = "";
+  
+  if(!userInput || !passInput) {
+    errorDiv.textContent = "Completa todos los campos";
+    errorDiv.style.display = "block";
+    return;
   }
-});
 
-// 🔐 DESHABILITAR DRAG & DROP
-document.addEventListener('dragstart', (e) => {
-  e.preventDefault();
-});
+  try {
+    const q = query(collection(db,"users"),
+      where("username","==",userInput),
+      where("password","==",passInput));
 
-/* MENU DROPDOWN */
+    const snap = await getDocs(q);
+
+    if(snap.empty){
+      errorDiv.textContent = "Usuario o contraseña incorrectos";
+      errorDiv.style.display = "block";
+    } else {
+      const userData = snap.docs[0].data();
+      currentUser = userData.username;
+      currentUserUID = userData.uid;
+      
+      document.getElementById("loginOverlay").classList.add("hidden");
+      document.getElementById("chatSection").style.display = "flex";
+      document.getElementById("chatFooter").style.display = "flex";
+      document.getElementById("menuBtn").style.display = "flex";
+      
+      loadMessages();
+      markAllMessagesAsRead();
+      
+      console.log('✅ Sesión iniciada para:', currentUser);
+    }
+  } catch (error) {
+    errorDiv.textContent = "Error en el servidor";
+    errorDiv.style.display = "block";
+  }
+}
+
+// ========== MARCAR COMO LEÍDO ==========
+async function markAllMessagesAsRead() {
+  try {
+    const q = query(
+      collection(db, "messages"),
+      where("username", "!=", currentUser)
+    );
+    const snapshot = await getDocs(q);
+    
+    for (const docSnap of snapshot.docs) {
+      const messageData = docSnap.data();
+      
+      if (!messageData.read) {
+        await updateDoc(doc(db, "messages", docSnap.id), {
+          read: true,
+          readBy: currentUser,
+          readAt: new Date()
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error al marcar como leídos:", error);
+  }
+}
+
+// ========== LOGOUT ==========
+window.logout = function(){
+  currentUser = null;
+  currentUserUID = null;
+  selectedMessageId = null;
+  replyToMessage = null;
+  
+  if (unsubscribeMessages) {
+    unsubscribeMessages();
+    unsubscribeMessages = null;
+  }
+  
+  localStorage.removeItem('userUID');
+  sessionStorage.clear();
+  
+  document.getElementById("emailInput").value = "";
+  document.getElementById("passwordInput").value = "";
+  document.getElementById("messageInput").value = "";
+  document.getElementById("loginError").style.display = "none";
+  
+  window.backToMain();
+  
+  document.getElementById("loginOverlay").classList.remove("hidden");
+  document.getElementById("chatSection").style.display = "none";
+  document.getElementById("chatFooter").style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("messages").innerHTML = "";
+  
+  console.log('✅ Sesión cerrada');
+}
+
+// ========== MENU ==========
 window.toggleMenu = function(){
   const menu = document.getElementById("menuDropdown");
   menu.classList.toggle("active");
 }
 
-/* CERRAR MENU AL HACER CLICK FUERA */
 document.addEventListener("click", function(event){
   const menu = document.getElementById("menuDropdown");
   const menuBtn = document.getElementById("menuBtn");
@@ -658,44 +1048,7 @@ document.addEventListener("click", function(event){
   }
 });
 
-/* LOGIN */
-window.login = async function(){
-  const user = document.getElementById("username").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if(!user || !pass) return alert("Completa los campos");
-
-  const q = query(collection(db,"users"),
-    where("username","==",user),
-    where("password","==",pass));
-
-  const snap = await getDocs(q);
-
-  if(snap.empty){
-    alert("Datos incorrectos");
-  }else{
-    currentUser = user;
-    
-    // ✅ CAMBIO 1: Obtener el UID del usuario
-    const userData = snap.docs[0].data();
-    currentUserUID = userData.uid;
-    localStorage.setItem('userUID', userData.uid);
-    
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("chatSection").style.display = "flex";
-    document.getElementById("chatFooter").style.display = "flex";
-    document.getElementById("menuBtn").style.display = "flex";
-    loadMessages();
-  }
-}
-
-
-/* LOGOUT */
-window.logout = function(){
-  localStorage.removeItem('userUID');
-  location.reload();
-}
-
-/* BORRAR CHAT - CONFIRMACIÓN */
+// ========== DELETE CHAT ==========
 window.deleteChatConfirm = function(){
   document.getElementById("confirmTitle").textContent = "Borrar Chat";
   document.getElementById("confirmText").textContent = "¿Estás seguro de que deseas borrar todos los mensajes?";
@@ -705,14 +1058,12 @@ window.deleteChatConfirm = function(){
   document.getElementById("menuDropdown").classList.remove("active");
 }
 
-/* CERRAR CONFIRMACIÓN */
 window.closeConfirmation = function(){
   document.getElementById("confirmationModal").classList.remove("active");
   selectedMessageId = null;
   pendingDeleteType = null;
 }
 
-/* CONFIRMAR ELIMINACIÓN */
 window.confirmDelete = async function(){
   if(pendingDeleteType === "chat"){
     await deleteAllMessages();
@@ -722,7 +1073,6 @@ window.confirmDelete = async function(){
   closeConfirmation();
 }
 
-/* ELIMINAR TODOS LOS MENSAJES */
 async function deleteAllMessages(){
   try {
     const q = query(collection(db,"messages"));
@@ -739,7 +1089,6 @@ async function deleteAllMessages(){
   }
 }
 
-/* ELIMINAR UN MENSAJE */
 async function deleteMessage(docId){
   try {
     await deleteDoc(doc(db, "messages", docId));
@@ -749,7 +1098,7 @@ async function deleteMessage(docId){
   }
 }
 
-/* ENVIAR TEXTO CON OPCIÓN DE RESPUESTA */
+// ========== SEND MESSAGE ==========
 window.sendMessage = async function(){
   const text = document.getElementById("messageInput").value.trim();
   if(text === "") return;
@@ -758,10 +1107,11 @@ window.sendMessage = async function(){
     text: text,
     username: currentUser,
     createdAt: new Date(),
-    type: "text"
+    type: "text",
+    status: "sent",
+    read: false
   };
 
-  // Si va a responder a un mensaje, incluye la referencia
   if (replyToMessage) {
     messageData.replyTo = {
       id: replyToMessage.id,
@@ -776,7 +1126,7 @@ window.sendMessage = async function(){
   window.cancelReply();
 }
 
-/* ENVIAR IMAGEN O VIDEO */
+// ========== SEND MEDIA ==========
 document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -790,10 +1140,7 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   }
 
   const folder = isVideo ? "chatVideos" : "chatImages";
-  
-  // ✅ CAMBIO 2: Agregar UID a la ruta
-  const userUID = localStorage.getItem('userUID') || currentUserUID;
-  const storageRef = ref(storage, folder + "/" + userUID + "/" + Date.now() + "_" + file.name);
+  const storageRef = ref(storage, folder + "/" + currentUserUID + "/" + Date.now() + "_" + file.name);
   
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
@@ -802,7 +1149,9 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
     username: currentUser,
     createdAt: new Date(),
     viewedBy: [],
-    type: isVideo ? "video" : "image"
+    type: isVideo ? "video" : "image",
+    status: "sent",
+    read: false
   };
 
   if(isVideo) {
@@ -816,13 +1165,16 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   document.getElementById("fileInput").value = "";
 });
 
-/* ABRIR MODAL CON FOTO O VIDEO - CORREGIDO */
+// ========== OPEN MEDIA MODAL ==========
 window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(username !== currentUser){
     try {
       const messageDoc = doc(db, "messages", docId);
       await updateDoc(messageDoc, {
-        viewedBy: [currentUser]
+        viewedBy: [currentUser],
+        read: true,
+        readBy: currentUser,
+        readAt: new Date()
       });
     } catch(error) {
       console.log("Error al actualizar:", error);
@@ -836,12 +1188,10 @@ window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
     modalImage.style.display = "none";
     modalVideo.style.display = "block";
     
-    // ✅ CORREGIDO: Reinicia el video correctamente
     modalVideo.pause();
     modalVideo.currentTime = 0;
     modalVideo.src = "";
     
-    // Espera un tick para que se limpie bien
     setTimeout(() => {
       modalVideo.src = mediaUrl;
       modalVideo.load();
@@ -855,13 +1205,12 @@ window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   document.getElementById("mediaModal").classList.add("active");
 }
 
-/* CERRAR MODAL */
 window.closeMediaModal = function(){
   document.getElementById("mediaModal").classList.remove("active");
   document.getElementById("modalVideo").pause();
 }
 
-/* MOSTRAR MENÚ DE OPCIONES - SIEMPRE DENTRO DEL CONTENEDOR */
+// ========== MESSAGE MENU ==========
 function showMessageMenu(x, y, docId, messageData) {
   const menu = document.getElementById("messageMenu");
   const container = document.querySelector(".container");
@@ -870,11 +1219,9 @@ function showMessageMenu(x, y, docId, messageData) {
   const menuHeight = 100;
   const padding = 10;
   
-  // Posición relativa al contenedor
   let left = x - containerRect.left;
   let top = y - containerRect.top;
   
-  // Ajustar LEFT
   if (left + menuWidth + padding > containerRect.width) {
     left = containerRect.width - menuWidth - padding;
   }
@@ -882,7 +1229,6 @@ function showMessageMenu(x, y, docId, messageData) {
     left = padding;
   }
   
-  // Ajustar TOP
   if (top + menuHeight + padding > containerRect.height) {
     top = containerRect.height - menuHeight - padding;
   }
@@ -896,13 +1242,12 @@ function showMessageMenu(x, y, docId, messageData) {
   menuOpenTime = Date.now();
   selectedMessageId = docId;
 
-  // Botón "Responder"
   document.getElementById("replyBtn").onclick = function() {
     menu.style.display = "none";
     showReplyPreview(messageData);
     replyToMessage = messageData;
   };
-  // Botón "Eliminar"
+  
   document.getElementById("deleteMsgBtn").onclick = function() {
     menu.style.display = "none";
     document.getElementById("confirmTitle").textContent = "Borrar Mensaje";
@@ -913,7 +1258,6 @@ function showMessageMenu(x, y, docId, messageData) {
   };
 }
 
-/* MOSTRAR VISTA PREVIA DE RESPUESTA */
 function showReplyPreview(messageData){
   const preview = document.getElementById("replyPreview");
   const replyText = document.getElementById("replyText");
@@ -925,13 +1269,11 @@ function showReplyPreview(messageData){
   document.getElementById("messageInput").focus();
 }
 
-/* CANCELAR RESPUESTA */
 window.cancelReply = function() {
   document.getElementById("replyPreview").style.display = "none";
   replyToMessage = null;
 };
 
-/* OCULTAR MENÚ AL HACER CLICK FUERA */
 document.addEventListener("click", (e) => {
   const menu = document.getElementById("messageMenu");
   if (menu && !menu.contains(e.target) && Date.now() - menuOpenTime > 100) {
@@ -939,7 +1281,7 @@ document.addEventListener("click", (e) => {
   }
 });
 
-/* SCROLL AL FINAL */
+// ========== SCROLL ==========
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
   setTimeout(() => {
@@ -947,12 +1289,11 @@ function scrollToBottom() {
   }, 50);
 }
 
-/* LONG PRESS EN MENSAJES */
+// ========== LONG PRESS ==========
 function addMessageListeners(element, docId, messageData){
   let pressTimer;
   let pressStarted = false;
 
-  // Long press móvil
   element.addEventListener("touchstart", (e) => {
     pressStarted = true;
     pressTimer = setTimeout(() => {
@@ -975,7 +1316,6 @@ function addMessageListeners(element, docId, messageData){
     clearTimeout(pressTimer);
   });
 
-  // Click derecho desktop
   element.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     element.classList.add("long-press");
@@ -987,11 +1327,11 @@ function addMessageListeners(element, docId, messageData){
   });
 }
 
-/* CARGAR MENSAJES */
+// ========== LOAD MESSAGES ==========
 function loadMessages(){
   const q = query(collection(db,"messages"), orderBy("createdAt"));
 
-  onSnapshot(q, (snapshot)=>{
+  unsubscribeMessages = onSnapshot(q, (snapshot)=>{
     const messagesDiv = document.getElementById("messages");
     const messageCount = snapshot.size;
     const isFirstLoad = lastMessageCount === 0;
@@ -1004,17 +1344,19 @@ function loadMessages(){
     snapshot.forEach(doc=>{
       const data = doc.data();
       const docId = doc.id;
+      const isSent = data.username === currentUser;
+      const otherUser = currentUser === "pipe" ? "angie" : "pipe";
       
       const div = document.createElement("div");
       div.classList.add("message");
-      div.classList.add(data.username === currentUser ? "sent" : "received");
+      div.classList.add(isSent ? "sent" : "received");
 
-      let content = `<div class="username">${data.username}</div>`;
+      let content = `<div class="username">${escapeHtml(data.username)}</div>`;
 
-      // Mostrar referencia si responde a un mensaje
+      // Reply reference
       if(data.replyTo) {
         content += `<div class="reply-ref">
-          <b>↩️ Respondiendo a ${data.replyTo.username}:</b>
+          <b>↩️ ${escapeHtml(data.replyTo.username)}</b>
           <span>${escapeHtml(data.replyTo.text || "").substring(0, 80)}</span>
         </div>`;
       }
@@ -1026,16 +1368,14 @@ function loadMessages(){
       if(data.imageUrl){
         const viewedBy = data.viewedBy || [];
         const wasViewed = viewedBy.length > 0;
-        const isSender = data.username === currentUser;
-        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
 
-        if(isSender){
+        if(isSent){
           content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
         } else {
           if(wasViewed){
             content += `<div class="photo-status">📸 Foto vista</div>`;
           } else {
-            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto" style="-webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">`;
+            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto">`;
           }
         }
       }
@@ -1043,26 +1383,29 @@ function loadMessages(){
       if(data.videoUrl){
         const viewedBy = data.viewedBy || [];
         const wasViewed = viewedBy.length > 0;
-        const isSender = data.username === currentUser;
-        const otherUser = currentUser === "pipe" ? "angie" : "pipe";
 
-        if(isSender){
+        if(isSent){
           content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
         } else {
           if(wasViewed){
             content += `<div class="photo-status">🎥 Video visto</div>`;
           } else {
-            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:5px; background:#000; -webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; pointer-events:auto;">
+            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:3px; background:#000; cursor:pointer; pointer-events:auto;">
               <source src="${data.videoUrl}" type="video/mp4">
             </video>`;
           }
         }
       }
 
+      // ✅ DOBLE CHECK MEJORADO
+      if (isSent) {
+        const checkColor = data.read ? "read" : "sent";
+        content += `<div class="message-footer"><span class="check-mark ${checkColor}">✓✓</span></div>`;
+      }
+
       div.innerHTML = content;
       messagesDiv.appendChild(div);
       
-      // Agregar listeners para long press
       addMessageListeners(div, docId, {
         id: docId,
         text: data.text,
@@ -1078,14 +1421,12 @@ function loadMessages(){
   });
 }
 
-/* ESCAPE HTML PARA SEGURIDAD */
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-/* AJUSTAR LAYOUT AL CAMBIAR TAMAÑO */
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize', () => {
     scrollToBottom();
@@ -1096,19 +1437,18 @@ window.addEventListener('resize', () => {
   scrollToBottom();
 });
 
-// Cerrar modal de media al hacer click fuera
 document.getElementById("mediaModal").addEventListener("click", function(e){
   if(e.target === this){
     closeMediaModal();
   }
 });
 
-// Cerrar modal de confirmación al hacer click fuera
 document.getElementById("confirmationModal").addEventListener("click", function(e){
   if(e.target === this){
     closeConfirmation();
   }
 });
+
 </script>
 
 </body>
