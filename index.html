@@ -59,11 +59,12 @@ body{
   background: #1a1a1a;
   display:flex;
   justify-content:center;
-  align-items:center;
+  align-items:flex-start;
   z-index:100;
   -webkit-user-select: none;
-  padding:20px;
+  padding:0;
   overflow-y:auto;
+  overflow-x:hidden;
 }
 
 .login-overlay.hidden{
@@ -75,12 +76,13 @@ body{
   border-radius:16px;
   padding:0;
   width:100%;
-  max-width:360px;
+  max-width:420px;
+  height:100%;
   text-align:center;
   -webkit-user-select: none;
   display:flex;
   flex-direction:column;
-  max-height:90vh;
+  position:relative;
 }
 
 .login-header{
@@ -123,59 +125,62 @@ body{
 .login-content{
   flex:1;
   overflow-y:auto;
-  padding:30px 20px;
+  overflow-x:hidden;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
 }
 
 .login-title{
   color:white;
-  font-size:24px;
+  font-size:20px;
   font-weight:700;
-  margin:0 0 10px 0;
+  margin:0;
   text-align:center;
   -webkit-user-select: none;
 }
 
 .login-subtitle{
   color:#999;
-  font-size:14px;
-  margin:0 0 30px 0;
+  font-size:13px;
+  margin:0;
   text-align:center;
   -webkit-user-select: none;
-  line-height:1.4;
+  line-height:1.3;
 }
 
 .login-buttons-group{
   display:flex;
   flex-direction:column;
-  gap:12px;
-  margin-bottom:20px;
+  gap:10px;
 }
 
 .login-btn{
-  padding:14px;
+  padding:12px;
   background:none;
   border:1px solid #444;
   border-radius:12px;
   color:white;
-  font-size:16px;
+  font-size:15px;
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:12px;
+  gap:10px;
   transition:border 0.2s, background 0.2s;
   -webkit-user-select: none;
 }
 
-.login-btn:hover{
+.login-btn:active{
   border-color:#666;
   background:#333;
 }
 
 .login-btn-icon{
-  font-size:20px;
-  width:24px;
-  height:24px;
+  font-size:18px;
+  width:20px;
+  height:20px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -190,10 +195,10 @@ body{
 .login-divider{
   display:flex;
   align-items:center;
-  gap:15px;
-  margin:20px 0;
+  gap:12px;
   color:#666;
-  font-size:13px;
+  font-size:12px;
+  margin:0;
 }
 
 .login-divider::before,
@@ -205,18 +210,14 @@ body{
 }
 
 .login-form-group{
-  display:none;
-  flex-direction:column;
-  gap:12px;
-}
-
-.login-form-group.active{
   display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
 .login-email-input{
   width:100%;
-  padding:14px;
+  padding:12px;
   background:#3a3a3a;
   border:1px solid #444;
   border-radius:12px;
@@ -234,12 +235,13 @@ body{
 .login-email-input:focus{
   outline:none;
   border-color:#10a37f;
+  box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.1);
 }
 
 .login-button-group{
   display:flex;
-  gap:12px;
-  margin-top:12px;
+  gap:10px;
+  margin-top:0;
 }
 
 .login-continue-btn{
@@ -249,15 +251,15 @@ body{
   color:black;
   border:none;
   border-radius:12px;
-  font-size:16px;
+  font-size:15px;
   font-weight:600;
   cursor:pointer;
   -webkit-user-select: none;
   transition:opacity 0.2s;
 }
 
-.login-continue-btn:hover{
-  opacity:0.9;
+.login-continue-btn:active{
+  opacity:0.8;
 }
 
 .login-continue-btn:disabled{
@@ -272,21 +274,21 @@ body{
   color:white;
   border:none;
   border-radius:12px;
-  font-size:16px;
+  font-size:15px;
   font-weight:600;
   cursor:pointer;
   -webkit-user-select: none;
   transition:background 0.2s;
 }
 
-.login-back-btn:hover{
+.login-back-btn:active{
   background:#555;
 }
 
 .login-error{
   color:#ef4444;
-  font-size:13px;
-  margin-top:10px;
+  font-size:12px;
+  margin:0;
   display:none;
   text-align:center;
   -webkit-user-select: none;
@@ -404,6 +406,7 @@ body{
   background:#ece5dd;
   min-height:0;
   -webkit-user-select: none;
+  scroll-behavior: smooth;
 }
 
 /* ========== MENSAJES ========== */
@@ -830,13 +833,16 @@ body{
       <button class="login-close-btn" onclick="window.closeLoginModal()">✕</button>
     </div>
     
-    <div class="login-content">
-      <div id="loginMainSection" style="display:block;">
-        <div class="login-title">Iniciar sesión o registrarse</div>
-        <div class="login-subtitle">Obtendrás respuestas más inteligentes, podrás cargar archivos e imágenes, y más.</div>
+    <div class="login-content" id="loginContent">
+      <!-- MAIN LOGIN VIEW -->
+      <div id="loginMainSection" style="display:flex; flex-direction:column; gap:15px;">
+        <div>
+          <h2 class="login-title">Iniciar sesión o registrarse</h2>
+          <p class="login-subtitle">Obtendrás respuestas más inteligentes, podrás cargar archivos e imágenes, y más.</p>
+        </div>
         
+        <!-- BOTONES SOCIALES -->
         <div class="login-buttons-group">
-          <!-- GOOGLE -->
           <button class="login-btn" onclick="window.showLoginForm('google')">
             <span class="login-btn-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><path fill="#fff" d="M44.59 4.21a63.28 63.28 0 004.33 120.9 67.6 67.6 0 0032.36.35 57.13 57.13 0 0025.9-13.46 57.44 57.44 0 0016-26.26 74.33 74.33 0 001.61-33.58H65.27v24.69h34.47a29.72 29.72 0 01-12.66 19.52 36.16 36.16 0 01-13.93 5.5 41.29 41.29 0 01-15.1 0A37.16 37.16 0 0144 95.74a39.3 39.3 0 01-14.5-19.42 38.31 38.31 0 010-24.63 39.25 39.25 0 019.18-14.91A37.17 37.17 0 0176.13 27a34.28 34.28 0 0113.64 8q5.83-5.8 11.64-11.63c2-2.09 4.18-4.08 6.15-6.22A61.22 61.22 0 0087.2 4.59a64 64 0 00-42.61-.38z"/><path fill="#e33629" d="M44.59 4.21a64 64 0 0142.61.37 61.22 61.22 0 0120.35 12.62c-2 2.14-4.11 4.14-6.15 6.22Q95.58 29.23 89.77 35a34.28 34.28 0 00-13.64-8 37.17 37.17 0 00-37.46 9.74 39.25 39.25 0 00-9.18 14.91L8.76 35.6A63.53 63.53 0 0144.59 4.21z"/><path fill="#f8bd00" d="M3.26 51.5a62.93 62.93 0 015.5-15.9l20.73 16.09a38.31 38.31 0 000 24.63q-10.36 8-20.73 16.08a63.33 63.33 0 01-5.5-40.9z"/><path fill="#587dbd" d="M65.27 52.15h59.52a74.33 74.33 0 01-1.61 33.58 57.44 57.44 0 01-16 26.26c-6.69-5.22-13.41-10.4-20.1-15.62a29.72 29.72 0 0012.66-19.54H65.27c-.01-8.22 0-16.45 0-24.68z"/><path fill="#319f43" d="M8.75 92.4q10.37-8 20.73-16.08A39.3 39.3 0 0044 95.74a37.16 37.16 0 0014.08 6.08 41.29 41.29 0 0015.1 0 36.16 36.16 0 0013.93-5.5c6.69 5.22 13.41 10.4 20.1 15.62a57.13 57.13 0 01-25.9 13.47 67.6 67.6 0 01-32.36-.35 63 63 0 01-23-11.59A63.73 63.73 0 018.75 92.4z"/></svg>
@@ -844,7 +850,6 @@ body{
             <span>Continuar con Google</span>
           </button>
 
-          <!-- APPLE -->
           <button class="login-btn" onclick="window.showLoginForm('apple')">
             <span class="login-btn-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
@@ -854,7 +859,6 @@ body{
             <span>Continuar con Apple</span>
           </button>
 
-          <!-- TELÉFONO -->
           <button class="login-btn" onclick="window.showLoginForm('phone')">
             <span class="login-btn-icon">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -865,14 +869,23 @@ body{
           </button>
         </div>
         
-        <div class="login-divider">o</div>
+        <p class="login-divider">o</p>
+
+        <!-- INPUTS DIRECTOS EN MAIN -->
+        <div class="login-form-group">
+          <input type="text" id="mainUsernameInput" class="login-email-input" placeholder="Usuario">
+          <input type="password" id="mainPasswordInput" class="login-email-input" placeholder="Contraseña">
+          <button class="login-continue-btn" onclick="window.login('main')">Continuar</button>
+          <div class="login-error" id="mainLoginError"></div>
+        </div>
       </div>
 
-      <div id="loginFormSection" class="login-form-group">
+      <!-- FORM LOGIN VIEW (Para Google/Apple/Teléfono) -->
+      <div id="loginFormSection" style="display:none; flex-direction:column; gap:12px;">
         <input type="text" id="emailInput" class="login-email-input" placeholder="Usuario">
         <input type="password" id="passwordInput" class="login-email-input" placeholder="Contraseña">
         <div class="login-button-group">
-          <button class="login-continue-btn" onclick="window.login()">Continuar</button>
+          <button class="login-continue-btn" onclick="window.login('form')">Continuar</button>
           <button class="login-back-btn" onclick="window.backToMain()">Volver</button>
         </div>
         <div class="login-error" id="loginError"></div>
@@ -986,7 +999,7 @@ window.addEventListener('pagehide', function() {
 // ========== LOGIN FORM VISUAL ==========
 window.showLoginForm = function(method) {
   document.getElementById("loginMainSection").style.display = "none";
-  document.getElementById("loginFormSection").classList.add("active");
+  document.getElementById("loginFormSection").style.display = "flex";
   
   document.getElementById("emailInput").value = "";
   document.getElementById("passwordInput").value = "";
@@ -996,8 +1009,8 @@ window.showLoginForm = function(method) {
 }
 
 window.backToMain = function() {
-  document.getElementById("loginMainSection").style.display = "block";
-  document.getElementById("loginFormSection").classList.remove("active");
+  document.getElementById("loginMainSection").style.display = "flex";
+  document.getElementById("loginFormSection").style.display = "none";
   document.getElementById("loginError").style.display = "none";
 }
 
@@ -1005,11 +1018,19 @@ window.closeLoginModal = function() {
   // No hacer nada
 }
 
-// ========== LOGIN ==========
-window.login = async function(){
-  const userInput = document.getElementById("emailInput").value.trim();
-  const passInput = document.getElementById("passwordInput").value.trim();
-  const errorDiv = document.getElementById("loginError");
+// ========== LOGIN MEJORADO ==========
+window.login = async function(source){
+  let userInput, passInput, errorDiv;
+  
+  if (source === 'main') {
+    userInput = document.getElementById("mainUsernameInput").value.trim();
+    passInput = document.getElementById("mainPasswordInput").value.trim();
+    errorDiv = document.getElementById("mainLoginError");
+  } else {
+    userInput = document.getElementById("emailInput").value.trim();
+    passInput = document.getElementById("passwordInput").value.trim();
+    errorDiv = document.getElementById("loginError");
+  }
   
   errorDiv.style.display = "none";
   errorDiv.textContent = "";
@@ -1091,10 +1112,13 @@ window.logout = function(){
   localStorage.removeItem('userUID');
   sessionStorage.clear();
   
+  document.getElementById("mainUsernameInput").value = "";
+  document.getElementById("mainPasswordInput").value = "";
   document.getElementById("emailInput").value = "";
   document.getElementById("passwordInput").value = "";
   document.getElementById("messageInput").value = "";
   document.getElementById("loginError").style.display = "none";
+  document.getElementById("mainLoginError").style.display = "none";
   
   window.backToMain();
   
@@ -1354,12 +1378,12 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ========== SCROLL ==========
+// ========== SCROLL AL FINAL - MEJORADO ==========
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }, 50);
+  });
 }
 
 // ========== LONG PRESS ==========
@@ -1426,7 +1450,6 @@ function loadMessages(){
 
       let content = `<div class="username">${escapeHtml(data.username)}</div>`;
 
-      // Reply reference
       if(data.replyTo) {
         content += `<div class="reply-ref">
           <b>↩️ ${escapeHtml(data.replyTo.username)}</b>
@@ -1470,7 +1493,6 @@ function loadMessages(){
         }
       }
 
-      // ✅ DOBLE CHECK MEJORADO
       if (isSent) {
         const checkColor = data.read ? "read" : "sent";
         content += `<div class="message-footer"><span class="check-mark ${checkColor}">✓✓</span></div>`;
@@ -1488,9 +1510,7 @@ function loadMessages(){
       });
     });
 
-    if(isFirstLoad || isNewMessage){
-      scrollToBottom();
-    }
+    scrollToBottom();
   });
 }
 
