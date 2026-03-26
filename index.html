@@ -1044,7 +1044,7 @@ body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, deleteDoc, limit, startAfter, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -1062,12 +1062,18 @@ const storage = getStorage(app);
 
 let currentUser = null;
 let currentUserUID = null;
-let lastMessageCount = 0;
 let selectedMessageId = null;
 let pendingDeleteType = null;
 let replyToMessage = null;
 let menuOpenTime = 0;
 let unsubscribeMessages = null;
+
+// ========== PAGINACIÓN ==========
+const PAGE_SIZE = 50;
+let oldestDocSnap = null;
+let loadingMore = false;
+let allLoaded = false;
+let renderedIds = new Set();
 
 // ========== UPLOAD STATE ==========
 let isUploading = false;
@@ -1230,7 +1236,11 @@ window.logout = function(){
   currentUserUID = null;
   selectedMessageId = null;
   replyToMessage = null;
-  
+  oldestDocSnap = null;
+  loadingMore = false;
+  allLoaded = false;
+  renderedIds = new Set();
+
   if (unsubscribeMessages) {
     unsubscribeMessages();
     unsubscribeMessages = null;
@@ -1560,89 +1570,186 @@ function addMessageListeners(element, docId, messageData){
   element.addEventListener("click", () => { element.classList.remove("long-press"); });
 }
 
-// ========== LOAD MESSAGES ==========
-function loadMessages(){
-  const q = query(collection(db,"messages"), orderBy("createdAt"));
+// ========== CONSTRUIR ELEMENTO DE MENSAJE ==========
+function buildMessageElement(docId, data) {
+  const isSent = data.username === currentUser;
+  const otherUser = currentUser === "pipe" ? "angie" : "pipe";
 
-  unsubscribeMessages = onSnapshot(q, (snapshot)=>{
-    const messagesDiv = document.getElementById("messages");
-    lastMessageCount = snapshot.size;
-    messagesDiv.innerHTML = "";
-    markAllMessagesAsRead();
+  const div = document.createElement("div");
+  div.classList.add("message", isSent ? "sent" : "received");
+  div.dataset.id = docId;
 
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const docId = doc.id;
-      const isSent = data.username === currentUser;
-      const otherUser = currentUser === "pipe" ? "angie" : "pipe";
-      
-      const div = document.createElement("div");
-      div.classList.add("message");
-      div.classList.add(isSent ? "sent" : "received");
+  let content = `<div class="username">${escapeHtml(data.username)}</div>`;
 
-      let content = `<div class="username">${escapeHtml(data.username)}</div>`;
+  if (data.replyTo) {
+    content += `<div class="reply-ref">
+      <b>↩️ ${escapeHtml(data.replyTo.username)}</b>
+      <span>${escapeHtml(data.replyTo.text || "").substring(0, 80)}</span>
+    </div>`;
+  }
 
-      if(data.replyTo) {
-        content += `<div class="reply-ref">
-          <b>↩️ ${escapeHtml(data.replyTo.username)}</b>
-          <span>${escapeHtml(data.replyTo.text || "").substring(0, 80)}</span>
-        </div>`;
+  if (data.text) {
+    content += `<div class="message-text">${escapeHtml(data.text)}</div>`;
+  }
+
+  if (data.imageUrl) {
+    const wasViewed = (data.viewedBy || []).length > 0;
+    if (isSent) {
+      content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
+    } else {
+      content += wasViewed
+        ? `<div class="photo-status">📸 Foto vista</div>`
+        : `<img src="${data.imageUrl}" class="photo-blur" loading="lazy" onclick="openMediaModal('${docId}','${data.imageUrl}','image','${data.username}')" alt="Foto">`;
+    }
+  }
+
+  if (data.videoUrl) {
+    const wasViewed = (data.viewedBy || []).length > 0;
+    if (isSent) {
+      content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
+    } else {
+      content += wasViewed
+        ? `<div class="photo-status">🎥 Video visto</div>`
+        : `<video class="video-blur" onclick="openMediaModal('${docId}','${data.videoUrl}','video','${data.username}')" style="width:100%;border-radius:8px;margin-top:3px;background:#000;cursor:pointer;pointer-events:auto;">
+            <source src="${data.videoUrl}" type="video/mp4">
+          </video>`;
+    }
+  }
+
+  const msgTime = data.createdAt
+    ? new Date(data.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:true})
+    : "";
+
+  if (isSent) {
+    const checkColor = data.read ? "read" : "sent";
+    content += `<div class="message-footer"><span class="msg-time">${msgTime}</span><span class="check-mark ${checkColor}">✓✓</span></div>`;
+  } else {
+    content += `<div class="message-footer" style="display:flex;"><span class="msg-time">${msgTime}</span></div>`;
+  }
+
+  div.innerHTML = content;
+  addMessageListeners(div, docId, { id: docId, text: data.text, imageUrl: data.imageUrl, videoUrl: data.videoUrl, username: data.username });
+  return div;
+}
+
+// ========== CARGAR MENSAJES ANTIGUOS (scroll hacia arriba) ==========
+async function loadOlderMessages() {
+  if (loadingMore || allLoaded || !oldestDocSnap) return;
+  loadingMore = true;
+
+  const messagesDiv = document.getElementById("messages");
+  const prevHeight = messagesDiv.scrollHeight;
+
+  const q = query(
+    collection(db, "messages"),
+    orderBy("createdAt", "desc"),
+    startAfter(oldestDocSnap),
+    limit(PAGE_SIZE)
+  );
+
+  const snap = await getDocs(q);
+
+  if (snap.empty || snap.docs.length < PAGE_SIZE) allLoaded = true;
+
+  if (!snap.empty) {
+    oldestDocSnap = snap.docs[snap.docs.length - 1];
+    const fragment = document.createDocumentFragment();
+    // Los docs vienen desc, los invertimos para insertar en orden
+    [...snap.docs].reverse().forEach(d => {
+      if (!renderedIds.has(d.id)) {
+        renderedIds.add(d.id);
+        fragment.appendChild(buildMessageElement(d.id, d.data()));
       }
-
-      if(data.text){
-        content += `<div class="message-text">${escapeHtml(data.text)}</div>`;
-      }
-
-      if(data.imageUrl){
-        const wasViewed = (data.viewedBy || []).length > 0;
-        if(isSent){
-          content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
-        } else {
-          if(wasViewed){
-            content += `<div class="photo-status">📸 Foto vista</div>`;
-          } else {
-            content += `<img src="${data.imageUrl}" class="photo-blur" onclick="openMediaModal('${docId}', '${data.imageUrl}', 'image', '${data.username}')" alt="Foto">`;
-          }
-        }
-      }
-
-      if(data.videoUrl){
-        const wasViewed = (data.viewedBy || []).length > 0;
-        if(isSent){
-          content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
-        } else {
-          if(wasViewed){
-            content += `<div class="photo-status">🎥 Video visto</div>`;
-          } else {
-            content += `<video class="video-blur" onclick="openMediaModal('${docId}', '${data.videoUrl}', 'video', '${data.username}')" style="width:100%; border-radius:8px; margin-top:3px; background:#000; cursor:pointer; pointer-events:auto;">
-              <source src="${data.videoUrl}" type="video/mp4">
-            </video>`;
-          }
-        }
-      }
-
-      const msgTime = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:true}) : "";
-
-      if (isSent) {
-        const checkColor = data.read ? "read" : "sent";
-        content += `<div class="message-footer"><span class="msg-time">${msgTime}</span><span class="check-mark ${checkColor}">✓✓</span></div>`;
-      } else {
-        content += `<div class="message-footer" style="display:flex;"><span class="msg-time">${msgTime}</span></div>`;
-      }
-
-      div.innerHTML = content;
-      messagesDiv.appendChild(div);
-      
-      addMessageListeners(div, docId, {
-        id: docId,
-        text: data.text,
-        imageUrl: data.imageUrl,
-        videoUrl: data.videoUrl,
-        username: data.username
-      });
     });
+    messagesDiv.insertBefore(fragment, messagesDiv.firstChild);
+    // Mantener posición de scroll al agregar arriba
+    messagesDiv.scrollTop = messagesDiv.scrollHeight - prevHeight;
+  }
 
+  loadingMore = false;
+}
+
+// ========== LOAD MESSAGES (paginado + incremental) ==========
+function loadMessages() {
+  const messagesDiv = document.getElementById("messages");
+  renderedIds = new Set();
+  oldestDocSnap = null;
+  allLoaded = false;
+  messagesDiv.innerHTML = "";
+
+  // ---- 1. Carga inicial: últimos PAGE_SIZE mensajes ----
+  const initQ = query(
+    collection(db, "messages"),
+    orderBy("createdAt", "desc"),
+    limit(PAGE_SIZE)
+  );
+
+  getDocs(initQ).then(snap => {
+    if (snap.empty) { allLoaded = true; return; }
+
+    oldestDocSnap = snap.docs[snap.docs.length - 1];
+    if (snap.docs.length < PAGE_SIZE) allLoaded = true;
+
+    const fragment = document.createDocumentFragment();
+    [...snap.docs].reverse().forEach(d => {
+      renderedIds.add(d.id);
+      fragment.appendChild(buildMessageElement(d.id, d.data()));
+    });
+    messagesDiv.appendChild(fragment);
     scrollToBottom();
+    markAllMessagesAsRead();
+  });
+
+  // ---- 2. Listener en tiempo real: solo mensajes NUEVOS ----
+  // Escucha solo docs creados a partir de ahora
+  const liveQ = query(
+    collection(db, "messages"),
+    orderBy("createdAt"),
+    startAfter(new Date())   // solo lo que llegue después del login
+  );
+
+  // Usamos limit alto para el listener en tiempo real pero con startAfter(now)
+  // para que no redescargue todo el historial
+  unsubscribeMessages = onSnapshot(
+    query(collection(db, "messages"), orderBy("createdAt")),
+    (snapshot) => {
+      let addedNew = false;
+      snapshot.docChanges().forEach(change => {
+        if (change.type === "added" && !renderedIds.has(change.doc.id)) {
+          renderedIds.add(change.doc.id);
+          messagesDiv.appendChild(buildMessageElement(change.doc.id, change.doc.data()));
+          addedNew = true;
+        }
+        if (change.type === "modified") {
+          // Actualizar tick de lectura sin re-renderizar todo
+          const existing = messagesDiv.querySelector(`[data-id="${change.doc.id}"]`);
+          if (existing) {
+            const data = change.doc.data();
+            const checkEl = existing.querySelector(".check-mark");
+            if (checkEl && data.read) {
+              checkEl.classList.remove("sent");
+              checkEl.classList.add("read");
+            }
+          }
+        }
+        if (change.type === "removed") {
+          const existing = messagesDiv.querySelector(`[data-id="${change.doc.id}"]`);
+          if (existing) existing.remove();
+          renderedIds.delete(change.doc.id);
+        }
+      });
+      if (addedNew) {
+        scrollToBottom();
+        markAllMessagesAsRead();
+      }
+    }
+  );
+
+  // ---- 3. Detectar scroll arriba para cargar más ----
+  messagesDiv.addEventListener("scroll", () => {
+    if (messagesDiv.scrollTop < 80 && !loadingMore && !allLoaded) {
+      loadOlderMessages();
+    }
   });
 }
 
