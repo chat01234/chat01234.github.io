@@ -623,7 +623,6 @@ body{
   margin-top:4px;
 }
 
-/* Spinner animado */
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .upload-spinner{
   width:13px;height:13px;
@@ -796,7 +795,6 @@ body{
   -webkit-user-select: none;
 }
 
-/* Botón de adjunto deshabilitado durante subida */
 .footer button.uploading-disabled{
   background:#ccc !important;
   cursor:not-allowed;
@@ -895,25 +893,10 @@ body{
   display: block;
   margin-bottom: 2px;
 }
-
-/* ========== PRIVACY OVERLAY ========== */
-#privacyOverlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #1a1a1a;
-  z-index: 9999;
-}
 </style>
 </head>
 
 <body>
-
-<!-- ========== PRIVACY OVERLAY ========== -->
-<div id="privacyOverlay"></div>
 
 <!-- ========== LOGIN OVERLAY ========== -->
 <div class="login-overlay" id="loginOverlay">
@@ -1114,7 +1097,6 @@ function setProgress(pct, sub) {
   if (sub !== undefined) document.getElementById("uploadBannerSub").textContent = sub;
 }
 
-// Advertencia al intentar cerrar con subida activa
 window.addEventListener("beforeunload", (e) => {
   if (isUploading) {
     e.preventDefault();
@@ -1122,7 +1104,7 @@ window.addEventListener("beforeunload", (e) => {
   }
 });
 
-// ========== CERRAR SESIÓN AL CAMBIAR DE PESTAÑA (iPhone) ==========
+// ========== CERRAR SESIÓN AL CAMBIAR DE PESTAÑA (solo móvil) ==========
 document.addEventListener('visibilitychange', function() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if (document.hidden && currentUser && isMobile) {
@@ -1130,17 +1112,7 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 
-// ========== PRIVACY OVERLAY AL CAMBIAR DE PESTAÑA ==========
-document.addEventListener('visibilitychange', function() {
-  const overlay = document.getElementById('privacyOverlay');
-  if (document.hidden) {
-    overlay.style.display = 'block';
-  } else {
-    overlay.style.display = 'none';
-  }
-});
-
-// ========== ATTACH BUTTON (bloqueado si está subiendo) ==========
+// ========== ATTACH BUTTON ==========
 window.handleAttachClick = function() {
   if (isUploading) {
     alert("⏳ Espera a que termine la subida actual antes de enviar otro archivo.");
@@ -1369,7 +1341,7 @@ window.sendMessage = async function(){
   window.cancelReply();
 }
 
-// ========== SEND MEDIA (con progreso) ==========
+// ========== SEND MEDIA ==========
 document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1383,7 +1355,6 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
     return;
   }
 
-  // Tamaño máximo: 100MB para videos
   const MAX_SIZE = 100 * 1024 * 1024;
   if (isVideo && file.size > MAX_SIZE) {
     alert("❌ El video es muy grande (máx. 100MB). Intenta con un video más corto.");
@@ -1397,37 +1368,31 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const label = isVideo ? "Subiendo video…" : "Subiendo imagen…";
   setUploading(true, label);
 
-  // Usar uploadBytesResumable para tener progreso real
   const uploadTask = uploadBytesResumable(storageRef, file);
   activeUploadTask = uploadTask;
 
   uploadTask.on(
     "state_changed",
-    // PROGRESO
     (snapshot) => {
       const pct = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
       const transferred = formatBytes(snapshot.bytesTransferred);
       const total = formatBytes(snapshot.totalBytes);
       setProgress(pct, `${transferred} de ${total} transferidos`);
     },
-    // ERROR
     (error) => {
       console.error("Error al subir:", error);
       setUploading(false);
       activeUploadTask = null;
       document.getElementById("fileInput").value = "";
-
       if (error.code === "storage/canceled") {
         console.log("Subida cancelada");
       } else {
         alert("❌ Error al subir el archivo. Intenta de nuevo.");
       }
     },
-    // COMPLETADO
     async () => {
       try {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-
         const messageData = {
           username: currentUser,
           createdAt: new Date(),
@@ -1436,10 +1401,8 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
           status: "sent",
           read: false
         };
-
         if(isVideo) messageData.videoUrl = url;
         else messageData.imageUrl = url;
-
         await addDoc(collection(db,"messages"), messageData);
       } catch(err) {
         console.error("Error al guardar mensaje:", err);
