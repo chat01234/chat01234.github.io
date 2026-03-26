@@ -888,10 +888,25 @@ body{
   display: block;
   margin-bottom: 2px;
 }
+
+/* ========== PRIVACY OVERLAY ========== */
+#privacyOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
+  z-index: 9999;
+}
 </style>
 </head>
 
 <body>
+
+<!-- ========== PRIVACY OVERLAY ========== -->
+<div id="privacyOverlay"></div>
 
 <!-- ========== LOGIN OVERLAY ========== -->
 <div class="login-overlay" id="loginOverlay">
@@ -1104,6 +1119,16 @@ window.addEventListener("beforeunload", (e) => {
 document.addEventListener('visibilitychange', function() {
   if (document.hidden && currentUser) {
     logout();
+  }
+});
+
+// ========== PRIVACY OVERLAY AL CAMBIAR DE PESTAÑA ==========
+document.addEventListener('visibilitychange', function() {
+  const overlay = document.getElementById('privacyOverlay');
+  if (document.hidden) {
+    overlay.style.display = 'block';
+  } else {
+    overlay.style.display = 'none';
   }
 });
 
