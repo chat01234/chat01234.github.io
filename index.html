@@ -1117,7 +1117,8 @@ window.addEventListener("beforeunload", (e) => {
 
 // ========== CERRAR SESIÓN AL CAMBIAR DE PESTAÑA (iPhone) ==========
 document.addEventListener('visibilitychange', function() {
-  if (document.hidden && currentUser) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (document.hidden && currentUser && isMobile) {
     logout();
   }
 });
