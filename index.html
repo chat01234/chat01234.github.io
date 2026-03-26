@@ -494,7 +494,14 @@ body{
 }
 
 .received .message-footer{
-  display:none;
+  display:flex;
+}
+
+.msg-time{
+  font-size:11px;
+  color:#999;
+  -webkit-user-select:none;
+  line-height:1;
 }
 
 .check-mark{
@@ -1651,9 +1658,13 @@ function loadMessages(){
         }
       }
 
+      const msgTime = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false}) : "";
+
       if (isSent) {
         const checkColor = data.read ? "read" : "sent";
-        content += `<div class="message-footer"><span class="check-mark ${checkColor}">✓✓</span></div>`;
+        content += `<div class="message-footer"><span class="msg-time">${msgTime}</span><span class="check-mark ${checkColor}">✓✓</span></div>`;
+      } else {
+        content += `<div class="message-footer" style="display:flex;"><span class="msg-time">${msgTime}</span></div>`;
       }
 
       div.innerHTML = content;
