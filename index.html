@@ -558,6 +558,76 @@ body{
   line-height:1;
 }
 
+/* ========== UPLOAD PROGRESS BANNER ========== */
+
+#uploadBanner{
+  display:none;
+  background:#075E54;
+  color:white;
+  padding:8px 14px;
+  flex-shrink:0;
+  z-index:16;
+  font-size:13px;
+}
+
+#uploadBanner.active{
+  display:block;
+}
+
+.upload-banner-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+}
+
+.upload-banner-label{
+  font-weight:600;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.upload-banner-pct{
+  font-size:13px;
+  font-weight:700;
+  color:#a7f3d0;
+}
+
+.upload-track{
+  height:5px;
+  background:rgba(255,255,255,0.25);
+  border-radius:99px;
+  overflow:hidden;
+}
+
+.upload-fill{
+  height:100%;
+  background:#25D366;
+  border-radius:99px;
+  width:0%;
+  transition:width 0.3s ease;
+}
+
+.upload-banner-sub{
+  font-size:11px;
+  color:rgba(255,255,255,0.7);
+  margin-top:4px;
+}
+
+/* Spinner animado */
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.upload-spinner{
+  width:13px;height:13px;
+  border:2px solid rgba(255,255,255,0.4);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  display:inline-block;
+  flex-shrink:0;
+}
+
 /* ========== MODAL ========== */
 
 .modal{
@@ -641,9 +711,6 @@ body{
   box-shadow:0 4px 20px rgba(0,0,0,0.2);
   user-select:none;
   -webkit-user-select:none;
-  -moz-user-select:none;
-  -ms-user-select:none;
-  -webkit-user-callout: none;
 }
 
 .confirmation-content h3{
@@ -675,9 +742,6 @@ body{
   font-size:14px;
   user-select:none;
   -webkit-user-select:none;
-  -moz-user-select:none;
-  -ms-user-select:none;
-  -webkit-user-callout: none;
 }
 
 .btn-cancel{
@@ -725,6 +789,13 @@ body{
   -webkit-user-select: none;
 }
 
+/* Botón de adjunto deshabilitado durante subida */
+.footer button.uploading-disabled{
+  background:#ccc !important;
+  cursor:not-allowed;
+  opacity:0.6;
+}
+
 /* ========== REPLY PREVIEW ========== */
 
 #replyPreview {
@@ -742,7 +813,6 @@ body{
   font-weight:bold;
   color:#075E54;
   font-size:11px;
-  -webkit-user-select:none;
 }
 
 #replyText{
@@ -750,7 +820,6 @@ body{
   font-size:12px;
   display:block;
   margin-top:3px;
-  -webkit-user-select:none;
 }
 
 #replyPreview button{
@@ -762,7 +831,6 @@ body{
   font-size:18px;
   cursor:pointer;
   color:#999;
-  -webkit-user-select:none;
 }
 
 /* ========== MESSAGE MENU ========== */
@@ -834,14 +902,12 @@ body{
     </div>
     
     <div class="login-content" id="loginContent">
-      <!-- MAIN LOGIN VIEW -->
       <div id="loginMainSection" style="display:flex; flex-direction:column; gap:15px;">
         <div>
           <h2 class="login-title">Iniciar sesión o registrarse</h2>
           <p class="login-subtitle">Obtendrás respuestas más inteligentes, podrás cargar archivos e imágenes, y más.</p>
         </div>
         
-        <!-- BOTONES SOCIALES -->
         <div class="login-buttons-group">
           <button class="login-btn" onclick="window.showLoginForm('google')">
             <span class="login-btn-icon">
@@ -871,7 +937,6 @@ body{
         
         <p class="login-divider">o</p>
 
-        <!-- INPUTS DIRECTOS EN MAIN -->
         <div class="login-form-group">
           <input type="text" id="mainUsernameInput" class="login-email-input" placeholder="Usuario">
           <input type="password" id="mainPasswordInput" class="login-email-input" placeholder="Contraseña">
@@ -880,7 +945,6 @@ body{
         </div>
       </div>
 
-      <!-- FORM LOGIN VIEW (Para Google/Apple/Teléfono) -->
       <div id="loginFormSection" style="display:none; flex-direction:column; gap:12px;">
         <input type="text" id="emailInput" class="login-email-input" placeholder="Usuario">
         <input type="password" id="passwordInput" class="login-email-input" placeholder="Contraseña">
@@ -914,6 +978,21 @@ body{
     <div class="messages" id="messages"></div>
   </div>
 
+  <!-- UPLOAD PROGRESS BANNER -->
+  <div id="uploadBanner">
+    <div class="upload-banner-top">
+      <div class="upload-banner-label">
+        <span class="upload-spinner"></span>
+        <span id="uploadBannerLabel">Subiendo video…</span>
+      </div>
+      <span class="upload-banner-pct" id="uploadBannerPct">0%</span>
+    </div>
+    <div class="upload-track">
+      <div class="upload-fill" id="uploadFill"></div>
+    </div>
+    <div class="upload-banner-sub" id="uploadBannerSub">No cierres la app hasta que termine</div>
+  </div>
+
   <!-- REPLY PREVIEW -->
   <div id="replyPreview">
     <div>Respondiendo a:</div>
@@ -924,7 +1003,7 @@ body{
   <!-- FOOTER -->
   <div class="footer" id="chatFooter" style="display:none;">
     <input type="file" id="fileInput" accept="image/*,video/*" hidden>
-    <button onclick="document.getElementById('fileInput').click()">📷</button>
+    <button id="attachBtn" onclick="handleAttachClick()">📷</button>
     <input type="text" id="messageInput" placeholder="Mensaje">
     <button onclick="sendMessage()">➤</button>
   </div>
@@ -961,7 +1040,7 @@ body{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB8MX9UKhyhatywGhPbpIldBD80wsY38BI",
@@ -985,10 +1064,54 @@ let replyToMessage = null;
 let menuOpenTime = 0;
 let unsubscribeMessages = null;
 
+// ========== UPLOAD STATE ==========
+let isUploading = false;
+let activeUploadTask = null;
+
+function setUploading(state, label = "Subiendo archivo…") {
+  isUploading = state;
+  const banner = document.getElementById("uploadBanner");
+  const attachBtn = document.getElementById("attachBtn");
+
+  if (state) {
+    banner.classList.add("active");
+    document.getElementById("uploadBannerLabel").textContent = label;
+    attachBtn.classList.add("uploading-disabled");
+    attachBtn.title = "Espera a que termine la subida";
+  } else {
+    banner.classList.remove("active");
+    attachBtn.classList.remove("uploading-disabled");
+    attachBtn.title = "";
+    setProgress(0, "");
+  }
+}
+
+function setProgress(pct, sub) {
+  document.getElementById("uploadFill").style.width = pct + "%";
+  document.getElementById("uploadBannerPct").textContent = Math.round(pct) + "%";
+  if (sub !== undefined) document.getElementById("uploadBannerSub").textContent = sub;
+}
+
+// Advertencia al intentar cerrar con subida activa
+window.addEventListener("beforeunload", (e) => {
+  if (isUploading) {
+    e.preventDefault();
+    e.returnValue = "Hay un archivo subiendo. Si sales, se perderá.";
+  }
+});
+
+// ========== ATTACH BUTTON (bloqueado si está subiendo) ==========
+window.handleAttachClick = function() {
+  if (isUploading) {
+    alert("⏳ Espera a que termine la subida actual antes de enviar otro archivo.");
+    return;
+  }
+  document.getElementById("fileInput").click();
+};
+
 // ========== CERRAR SESIÓN AL NAVEGAR ==========
 window.addEventListener('pagehide', function() {
   if (currentUser) {
-    console.log('🔒 Página se va a cerrar - Limpiando sesión');
     currentUser = null;
     currentUserUID = null;
     localStorage.removeItem('userUID');
@@ -1000,12 +1123,9 @@ window.addEventListener('pagehide', function() {
 window.showLoginForm = function(method) {
   document.getElementById("loginMainSection").style.display = "none";
   document.getElementById("loginFormSection").style.display = "flex";
-  
   document.getElementById("emailInput").value = "";
   document.getElementById("passwordInput").value = "";
   document.getElementById("emailInput").focus();
-  
-  console.log('📝 Formulario abierto para:', method);
 }
 
 window.backToMain = function() {
@@ -1014,11 +1134,9 @@ window.backToMain = function() {
   document.getElementById("loginError").style.display = "none";
 }
 
-window.closeLoginModal = function() {
-  // No hacer nada
-}
+window.closeLoginModal = function() {}
 
-// ========== LOGIN MEJORADO ==========
+// ========== LOGIN ==========
 window.login = async function(source){
   let userInput, passInput, errorDiv;
   
@@ -1063,8 +1181,6 @@ window.login = async function(source){
       
       loadMessages();
       markAllMessagesAsRead();
-      
-      console.log('✅ Sesión iniciada para:', currentUser);
     }
   } catch (error) {
     errorDiv.textContent = "Error en el servidor";
@@ -1075,20 +1191,12 @@ window.login = async function(source){
 // ========== MARCAR COMO LEÍDO ==========
 async function markAllMessagesAsRead() {
   try {
-    const q = query(
-      collection(db, "messages"),
-      where("username", "!=", currentUser)
-    );
+    const q = query(collection(db, "messages"), where("username", "!=", currentUser));
     const snapshot = await getDocs(q);
-    
     for (const docSnap of snapshot.docs) {
-      const messageData = docSnap.data();
-      
-      if (!messageData.read) {
+      if (!docSnap.data().read) {
         await updateDoc(doc(db, "messages", docSnap.id), {
-          read: true,
-          readBy: currentUser,
-          readAt: new Date()
+          read: true, readBy: currentUser, readAt: new Date()
         });
       }
     }
@@ -1099,6 +1207,13 @@ async function markAllMessagesAsRead() {
 
 // ========== LOGOUT ==========
 window.logout = function(){
+  if (isUploading) {
+    const confirmExit = confirm("⚠️ Hay un video subiendo. Si sales, se perderá. ¿Seguro que quieres salir?");
+    if (!confirmExit) return;
+    if (activeUploadTask) activeUploadTask.cancel();
+    setUploading(false);
+  }
+
   currentUser = null;
   currentUserUID = null;
   selectedMessageId = null;
@@ -1127,14 +1242,11 @@ window.logout = function(){
   document.getElementById("chatFooter").style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
   document.getElementById("messages").innerHTML = "";
-  
-  console.log('✅ Sesión cerrada');
 }
 
 // ========== MENU ==========
 window.toggleMenu = function(){
-  const menu = document.getElementById("menuDropdown");
-  menu.classList.toggle("active");
+  document.getElementById("menuDropdown").classList.toggle("active");
 }
 
 document.addEventListener("click", function(event){
@@ -1172,16 +1284,12 @@ window.confirmDelete = async function(){
 
 async function deleteAllMessages(){
   try {
-    const q = query(collection(db,"messages"));
-    const snapshot = await getDocs(q);
-    
+    const snapshot = await getDocs(query(collection(db,"messages")));
     for(const document of snapshot.docs){
       await deleteDoc(doc(db, "messages", document.id));
     }
-    
     alert("Chat eliminado correctamente");
   } catch(error) {
-    console.error("Error al eliminar chat:", error);
     alert("Error al eliminar el chat");
   }
 }
@@ -1190,7 +1298,6 @@ async function deleteMessage(docId){
   try {
     await deleteDoc(doc(db, "messages", docId));
   } catch(error) {
-    console.error("Error al eliminar mensaje:", error);
     alert("Error al eliminar el mensaje");
   }
 }
@@ -1218,12 +1325,11 @@ window.sendMessage = async function(){
   }
 
   await addDoc(collection(db,"messages"), messageData);
-
   document.getElementById("messageInput").value = "";
   window.cancelReply();
 }
 
-// ========== SEND MEDIA ==========
+// ========== SEND MEDIA (con progreso) ==========
 document.getElementById("fileInput").addEventListener("change", async(e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1233,49 +1339,94 @@ document.getElementById("fileInput").addEventListener("change", async(e)=>{
 
   if(!isVideo && !isImage) {
     alert("Por favor selecciona una imagen o video");
+    document.getElementById("fileInput").value = "";
+    return;
+  }
+
+  // Tamaño máximo: 100MB para videos
+  const MAX_SIZE = 100 * 1024 * 1024;
+  if (isVideo && file.size > MAX_SIZE) {
+    alert("❌ El video es muy grande (máx. 100MB). Intenta con un video más corto.");
+    document.getElementById("fileInput").value = "";
     return;
   }
 
   const folder = isVideo ? "chatVideos" : "chatImages";
   const storageRef = ref(storage, folder + "/" + currentUserUID + "/" + Date.now() + "_" + file.name);
   
-  await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(storageRef);
+  const label = isVideo ? "Subiendo video…" : "Subiendo imagen…";
+  setUploading(true, label);
 
-  const messageData = {
-    username: currentUser,
-    createdAt: new Date(),
-    viewedBy: [],
-    type: isVideo ? "video" : "image",
-    status: "sent",
-    read: false
-  };
+  // Usar uploadBytesResumable para tener progreso real
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  activeUploadTask = uploadTask;
 
-  if(isVideo) {
-    messageData.videoUrl = url;
-  } else {
-    messageData.imageUrl = url;
-  }
+  uploadTask.on(
+    "state_changed",
+    // PROGRESO
+    (snapshot) => {
+      const pct = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      const transferred = formatBytes(snapshot.bytesTransferred);
+      const total = formatBytes(snapshot.totalBytes);
+      setProgress(pct, `${transferred} de ${total} transferidos`);
+    },
+    // ERROR
+    (error) => {
+      console.error("Error al subir:", error);
+      setUploading(false);
+      activeUploadTask = null;
+      document.getElementById("fileInput").value = "";
 
-  await addDoc(collection(db,"messages"), messageData);
+      if (error.code === "storage/canceled") {
+        console.log("Subida cancelada");
+      } else {
+        alert("❌ Error al subir el archivo. Intenta de nuevo.");
+      }
+    },
+    // COMPLETADO
+    async () => {
+      try {
+        const url = await getDownloadURL(uploadTask.snapshot.ref);
 
-  document.getElementById("fileInput").value = "";
+        const messageData = {
+          username: currentUser,
+          createdAt: new Date(),
+          viewedBy: [],
+          type: isVideo ? "video" : "image",
+          status: "sent",
+          read: false
+        };
+
+        if(isVideo) messageData.videoUrl = url;
+        else messageData.imageUrl = url;
+
+        await addDoc(collection(db,"messages"), messageData);
+      } catch(err) {
+        console.error("Error al guardar mensaje:", err);
+        alert("⚠️ El archivo se subió pero no se pudo guardar el mensaje. Intenta de nuevo.");
+      } finally {
+        setUploading(false);
+        activeUploadTask = null;
+        document.getElementById("fileInput").value = "";
+      }
+    }
+  );
 });
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
 
 // ========== OPEN MEDIA MODAL ==========
 window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(username !== currentUser){
     try {
-      const messageDoc = doc(db, "messages", docId);
-      await updateDoc(messageDoc, {
-        viewedBy: [currentUser],
-        read: true,
-        readBy: currentUser,
-        readAt: new Date()
+      await updateDoc(doc(db, "messages", docId), {
+        viewedBy: [currentUser], read: true, readBy: currentUser, readAt: new Date()
       });
-    } catch(error) {
-      console.log("Error al actualizar:", error);
-    }
+    } catch(error) {}
   }
   
   const modalImage = document.getElementById("modalImage");
@@ -1284,15 +1435,10 @@ window.openMediaModal = async function(docId, mediaUrl, mediaType, username){
   if(mediaType === "video") {
     modalImage.style.display = "none";
     modalVideo.style.display = "block";
-    
     modalVideo.pause();
     modalVideo.currentTime = 0;
     modalVideo.src = "";
-    
-    setTimeout(() => {
-      modalVideo.src = mediaUrl;
-      modalVideo.load();
-    }, 50);
+    setTimeout(() => { modalVideo.src = mediaUrl; modalVideo.load(); }, 50);
   } else {
     modalVideo.style.display = "none";
     modalImage.style.display = "block";
@@ -1319,19 +1465,10 @@ function showMessageMenu(x, y, docId, messageData) {
   let left = x - containerRect.left;
   let top = y - containerRect.top;
   
-  if (left + menuWidth + padding > containerRect.width) {
-    left = containerRect.width - menuWidth - padding;
-  }
-  if (left - padding < 0) {
-    left = padding;
-  }
-  
-  if (top + menuHeight + padding > containerRect.height) {
-    top = containerRect.height - menuHeight - padding;
-  }
-  if (top - padding < 0) {
-    top = padding;
-  }
+  if (left + menuWidth + padding > containerRect.width) left = containerRect.width - menuWidth - padding;
+  if (left - padding < 0) left = padding;
+  if (top + menuHeight + padding > containerRect.height) top = containerRect.height - menuHeight - padding;
+  if (top - padding < 0) top = padding;
   
   menu.style.left = left + "px";
   menu.style.top = top + "px";
@@ -1378,12 +1515,10 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ========== SCROLL AL FINAL - MEJORADO ==========
+// ========== SCROLL AL FINAL ==========
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
-  requestAnimationFrame(() => {
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
+  requestAnimationFrame(() => { messagesDiv.scrollTop = messagesDiv.scrollHeight; });
 }
 
 // ========== LONG PRESS ==========
@@ -1419,9 +1554,7 @@ function addMessageListeners(element, docId, messageData){
     showMessageMenu(e.clientX, e.clientY, docId, messageData);
   });
 
-  element.addEventListener("click", () => {
-    element.classList.remove("long-press");
-  });
+  element.addEventListener("click", () => { element.classList.remove("long-press"); });
 }
 
 // ========== LOAD MESSAGES ==========
@@ -1430,12 +1563,7 @@ function loadMessages(){
 
   unsubscribeMessages = onSnapshot(q, (snapshot)=>{
     const messagesDiv = document.getElementById("messages");
-    const messageCount = snapshot.size;
-    const isFirstLoad = lastMessageCount === 0;
-    const isNewMessage = messageCount > lastMessageCount;
-    
-    lastMessageCount = messageCount;
-    
+    lastMessageCount = snapshot.size;
     messagesDiv.innerHTML = "";
 
     snapshot.forEach(doc=>{
@@ -1462,9 +1590,7 @@ function loadMessages(){
       }
 
       if(data.imageUrl){
-        const viewedBy = data.viewedBy || [];
-        const wasViewed = viewedBy.length > 0;
-
+        const wasViewed = (data.viewedBy || []).length > 0;
         if(isSent){
           content += `<div class="photo-status">📸 Disponible 1 sola vez para ${otherUser}</div>`;
         } else {
@@ -1477,9 +1603,7 @@ function loadMessages(){
       }
 
       if(data.videoUrl){
-        const viewedBy = data.viewedBy || [];
-        const wasViewed = viewedBy.length > 0;
-
+        const wasViewed = (data.viewedBy || []).length > 0;
         if(isSent){
           content += `<div class="photo-status">🎥 Video disponible para ${otherUser}</div>`;
         } else {
@@ -1521,25 +1645,17 @@ function escapeHtml(text) {
 }
 
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', () => {
-    scrollToBottom();
-  });
+  window.visualViewport.addEventListener('resize', () => { scrollToBottom(); });
 }
 
-window.addEventListener('resize', () => {
-  scrollToBottom();
-});
+window.addEventListener('resize', () => { scrollToBottom(); });
 
 document.getElementById("mediaModal").addEventListener("click", function(e){
-  if(e.target === this){
-    closeMediaModal();
-  }
+  if(e.target === this) closeMediaModal();
 });
 
 document.getElementById("confirmationModal").addEventListener("click", function(e){
-  if(e.target === this){
-    closeConfirmation();
-  }
+  if(e.target === this) closeConfirmation();
 });
 
 </script>
