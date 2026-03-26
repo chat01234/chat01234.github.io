@@ -1100,6 +1100,13 @@ window.addEventListener("beforeunload", (e) => {
   }
 });
 
+// ========== CERRAR SESIÓN AL CAMBIAR DE PESTAÑA (iPhone) ==========
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden && currentUser) {
+    logout();
+  }
+});
+
 // ========== ATTACH BUTTON (bloqueado si está subiendo) ==========
 window.handleAttachClick = function() {
   if (isUploading) {
