@@ -1331,8 +1331,8 @@ window.sendMessage = async function(){
     };
   }
 
-  await addDoc(collection(db,"messages"), messageData);
   document.getElementById("messageInput").value = "";
+  await addDoc(collection(db,"messages"), messageData);
   window.cancelReply();
 }
 
